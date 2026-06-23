@@ -58,49 +58,69 @@
 <main class="main"><div class="content">
 
 <span class="eyebrow">第 14 章 · 生态与引擎</span>
-<h1>生态全景：Paimon 在大数据栈里的位置</h1>
-<p class="lead">学到这里，你已经会用 Flink + Paimon 做实时入湖了。但真实工作里，Paimon 从不孤军奋战——它和 Flink、Spark、Hive、StarRocks 等一起组成「湖仓栈」。这一章先用一张图把它们的分工讲清楚，后面几章再逐个动手。</p>
+<h1>生态全景：Paimon 身边都有谁</h1>
+<p class="lead">学到这儿，你已经能用 Flink + Paimon 把数据实时写进湖里了。但你可能也犯嘀咕：网上一会儿说 Flink，一会儿说 Spark、Hive、StarRocks，还冒出来个 Iceberg、WeData——<strong>这些东西到底跟 Paimon 是啥关系？哪个能替代哪个？我都得学吗？</strong>这一章就把这团乱麻一次性理清楚，用大白话，不堆术语。</p>
 
 <div class="callout key">
-<span class="tag">一句话先记住</span>
-<p>Paimon 是<strong>存数据的「表格式」</strong>（管数据怎么存在湖上）；Flink/Spark/Hive 是<strong>算数据的「计算引擎」</strong>（读写、加工）；StarRocks 是<strong>查得快的「OLAP 引擎」</strong>（对外提供秒级查询）；WeData 是<strong>把这一切托管起来的「云平台」</strong>。它们是分层协作，不是互相替代。</p>
+<span class="tag">先打个比方，记住这个就够了</span>
+<p>把整套大数据系统想象成<strong>一家餐厅</strong>：</p>
+<ul>
+<li><strong>Paimon = 冰箱 / 仓库</strong>。负责把食材（数据）<em>存好、放整齐、随时能取</em>。它不做菜，只管存。</li>
+<li><strong>Flink / Spark / Hive = 厨师</strong>。负责<em>从仓库取料、加工、再放回去</em>。它们是干活的人，但东西不是它们存的。</li>
+<li><strong>StarRocks = 前台传菜的飞毛腿</strong>。客人（报表、看板）一点单，它<em>飞快地从仓库取好端出去</em>，主打一个"快"。</li>
+<li><strong>WeData = 整个餐厅的"店长 + 中央厨房系统"</strong>。帮你把上面这些人和设备<em>统一管起来</em>，你不用自己招厨师、修冰箱。</li>
+<li><strong>Iceberg = 另一个牌子的冰箱</strong>。和 Paimon 干一样的活（存料），所以你<em>二选一</em>就行，不会两个冰箱一起买。</li>
+</ul>
+<p>所以核心就一句话：<strong>Paimon 管存，引擎管算，StarRocks 管快查，WeData 管托管，Iceberg 是 Paimon 的同行竞品。</strong>它们大多是"搭伙干活"，不是"你死我活"。</p>
 </div>
 
-<h2>分层看：谁负责什么</h2>
+<h2>为什么会有这么多东西？</h2>
+<p>因为一件事被拆成了好几个专业岗位。你想想：数据从产生到被人看到报表，中间要经过——</p>
+<ol>
+<li><strong>有人把数据搬进来</strong>（比如把 MySQL 里的订单实时同步过来）；</li>
+<li><strong>有个地方把数据存住</strong>（存得整齐、能更新、能查历史）；</li>
+<li><strong>有人对数据做加工</strong>（算汇总、做宽表、清洗）；</li>
+<li><strong>有人负责让老板秒查到结果</strong>（点开看板唰一下就出来）。</li>
+</ol>
+<p>一个工具想把这四件事全干好，太难了。所以大数据世界选择了<strong>分工</strong>：每个工具专精一件事，再拼到一起。Paimon 专精第 2 件（存），其它工具专精别的。理解了"分工"，你就理解了整个生态。</p>
+
+<h2>分层看：数据是怎么流动的</h2>
+<p>下面这张图，从上往下就是数据流动的方向。你不用记名字，先感受"料 → 存 → 算/查"这个走向：</p>
 <div class="flow">
-<div class="node"><div class="nt">数据源</div><div class="nd">MySQL / Kafka / 日志</div></div>
-<div class="arrow">↓ Flink CDC / Spark 写入</div>
-<div class="node brand"><div class="nt">Apache Paimon（表格式 + 存储）</div><div class="nd">数据真正存放的地方：表、主键、快照、文件，落在 HDFS/对象存储上</div></div>
-<div class="arrow">↑↓ 各引擎都来读写同一份数据</div>
-<div class="node"><div class="nt">计算 / 查询引擎</div><div class="nd">Flink（流）· Spark（批）· Hive（数仓）· StarRocks（极速查询）</div></div>
+<div class="node"><div class="nt">① 数据源（原料产地）</div><div class="nd">MySQL 数据库、Kafka 消息、各种日志</div></div>
+<div class="arrow">↓ 厨师（Flink / Spark）把料搬进仓库</div>
+<div class="node brand"><div class="nt">② Apache Paimon（仓库 / 冰箱）</div><div class="nd">数据真正存放的地方：表、主键、快照、文件，落在 HDFS 或对象存储上</div></div>
+<div class="arrow">↑↓ 谁要用数据，都来这个仓库取，存的只有一份</div>
+<div class="node"><div class="nt">③ 计算 / 查询引擎（厨师 + 传菜员）</div><div class="nd">Flink 管实时 · Spark 管批量 · Hive 管老数仓 · StarRocks 管秒级快查</div></div>
 </div>
-<p>关键认知：<strong>同一张 Paimon 表，可以被多个引擎同时读写</strong>。Flink 实时写进去，Spark 跑批量加工，StarRocks 对外秒级查询，Hive 做兼容查询——大家共用一份数据，不用来回拷贝。这就是「湖仓一体」的价值。</p>
+<p>这里有个特别重要、新手常常想不到的点：<strong>同一份数据，可以被好几个工具同时用，不用拷来拷去。</strong>Flink 在往里写，Spark 同时在读它跑报表，StarRocks 同时在对外提供查询——大家围着<em>同一个冰箱</em>转。这就是大家常说的"湖仓一体"，省钱省事的关键就在这"一份数据多人用"上。</p>
 
-<h2>各组件定位速查</h2>
+<h2>一张表认清所有人</h2>
+<p>把上面的话浓缩成一张速查表，以后忘了回来看这张就行：</p>
 <div class="table-wrap">
 <table>
-<thead><tr><th>组件</th><th>它是什么</th><th>和 Paimon 的关系</th><th>典型用途</th></tr></thead>
+<thead><tr><th>组件</th><th>大白话角色</th><th>和 Paimon 啥关系</th><th>啥时候用它</th></tr></thead>
 <tbody>
-<tr><td><strong>Flink</strong></td><td>流计算引擎</td><td>最佳拍档：实时写入 / 流式读取</td><td>CDC 入湖、实时宽表、流处理</td></tr>
-<tr><td><strong>Spark</strong></td><td>批处理引擎</td><td>读写 Paimon 表</td><td>批量加工、历史回算、机器学习</td></tr>
-<tr><td><strong>Hive</strong></td><td>老牌数仓 / SQL on Hadoop</td><td>通过 catalog 查询 Paimon 表</td><td>兼容存量数仓、离线查询</td></tr>
-<tr><td><strong>StarRocks</strong></td><td>OLAP 极速查询引擎</td><td>外部 catalog 直查 Paimon</td><td>对外报表、即席查询、加速</td></tr>
-<tr><td><strong>Iceberg</strong></td><td>另一种湖表格式（<em>竞品</em>）</td><td>同层替代关系，不是协作</td><td>对比选型时的参照物</td></tr>
-<tr><td><strong>WeData</strong></td><td>腾讯云数据开发平台</td><td>托管运行上面这一整套</td><td>云上一站式开发、调度、运维</td></tr>
+<tr><td><strong>Flink</strong></td><td>实时干活的厨师</td><td>最佳拍档：实时往里写、能订阅变化</td><td>数据要"实时"进湖、做流处理</td></tr>
+<tr><td><strong>Spark</strong></td><td>批量干活的厨师</td><td>一起干活：批量读写 Paimon</td><td>跑大批量加工、算历史、做机器学习</td></tr>
+<tr><td><strong>Hive</strong></td><td>老资格的数仓厨师</td><td>一起干活：能查 Paimon 表</td><td>公司有老的 Hive 数仓，想平滑接上</td></tr>
+<tr><td><strong>StarRocks</strong></td><td>飞毛腿传菜员</td><td>一起干活：直接快查 Paimon</td><td>要对外做秒级报表、即席查询</td></tr>
+<tr><td><strong>Iceberg</strong></td><td>另一个牌子的冰箱（<em>竞品</em>）</td><td>二选一，不是搭伙</td><td>选型时拿来和 Paimon 比一比</td></tr>
+<tr><td><strong>WeData</strong></td><td>店长 + 中央厨房系统</td><td>把上面整套托管起来</td><td>不想自己搭运维、想云上一站式搞定</td></tr>
 </tbody>
 </table>
 </div>
 
-<div class="callout note">
-<span class="tag">为什么要分清「层」</span>
-<p>新手最容易混淆的是「Paimon 和 Flink 是不是二选一」。不是。Flink 是工具，Paimon 是工具加工/存放的「料」。真正和 Paimon 二选一的是 <strong>Iceberg / Hudi</strong> 这类同样是「表格式」的产品。把这点理清，后面就顺了。</p>
+<div class="callout warn">
+<span class="tag">最容易踩的认知坑</span>
+<p>很多新手第一反应是问"<strong>Paimon 和 Flink 是不是二选一？</strong>"——<strong>不是！</strong>这就好比问"冰箱和厨师二选一吗"，显然两个都得有，它们是搭配的。真正和 Paimon 二选一的，是 <strong>Iceberg、Hudi</strong> 这种"同样负责存"的另一个冰箱。把这一点想通，后面四章你就不会再绕晕。</p>
 </div>
 
-<div class="exercise"><div class="ex-h">练习 14-1</div><div><p>把下列组件归类到「表格式 / 计算引擎 / OLAP 查询 / 云平台」：Paimon、Flink、StarRocks、WeData、Spark、Iceberg。</p></div><details class="answer"><summary>查看参考答案</summary><p>表格式：Paimon、Iceberg；计算引擎：Flink（流）、Spark（批）；OLAP 查询引擎：StarRocks；云平台：WeData。其中 Paimon 与 Iceberg 是同层竞品（二选一），其余是协作关系。</p></details></div>
+<div class="exercise"><div class="ex-h">练习 14-1</div><div><p>用刚才“餐厅”的比方，说说下面每个组件相当于餐厅里的什么角色，并指出谁和谁是“二选一”：Paimon、Flink、StarRocks、WeData、Spark、Iceberg。</p></div><details class="answer"><summary>查看参考答案</summary><p>Paimon = 冰箱/仓库（管存）；Flink = 实时厨师、Spark = 批量厨师、Hive = 老数仓厨师（都管算）；StarRocks = 飞毛腿传菜员（管快查）；WeData = 店长/中央厨房（管托管）；Iceberg = 另一个牌子的冰箱。<strong>二选一的只有 Paimon 和 Iceberg</strong>（都是冰箱，买一个就行），其余都是搭伙干活的关系。</p></details></div>
 
 <div class="callout tip">
-<span class="tag">本章目标</span>
-<p>能说清 Paimon 与 Flink / Spark / Hive / StarRocks / Iceberg / WeData 各自的定位和关系，知道「谁和谁协作、谁和谁是竞品」。接下来四章逐个上手最常见的引擎集成。</p>
+<span class="tag">这一章你要带走的</span>
+<p>不用记任何命令。只要能用"餐厅分工"讲清楚：谁负责<strong>存</strong>、谁负责<strong>算</strong>、谁负责<strong>快查</strong>、谁负责<strong>托管</strong>，以及谁和谁是<strong>竞品</strong>。记住了，咱们下一章就请第一位厨师 Flink 上场，实际动手。</p>
 </div>
 
 <div class="pager"><a class="prev" href="12-faq.html"><span class="dir">← 上一页</span><span class="pttl">常见问题与排错</span></a><a class="next" href="15-flink.html"><span class="dir">下一页 →</span><span class="pttl">Flink + Paimon</span></a></div>

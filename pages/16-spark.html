@@ -58,23 +58,24 @@
 <main class="main"><div class="content">
 
 <span class="eyebrow">第 16 章 · 生态与引擎</span>
-<h1>Spark + Paimon：批处理读写</h1>
-<p class="lead">Flink 擅长「流」，Spark 擅长「批」。同一张 Paimon 表，Flink 实时写、Spark 批量读来做加工/回算/训练，是非常常见的搭配。这一章用 Spark SQL 读写 Paimon。</p>
+<h1>Spark + Paimon：批量干活的厨师</h1>
+<p class="lead">上一章的 Flink 擅长"实时"，像个手脚麻利、随叫随到的快手厨师。这一章的 <strong>Spark 擅长"批量"</strong>，像个一次处理一大锅的大厨：跑历史数据回算、做大批量加工、训练机器学习模型，都是它的活。重点来了——<strong>它俩用的是同一个冰箱（同一张 Paimon 表）</strong>。Flink 实时往里写，Spark 随时来批量读、加工，这是真实项目里超常见的搭配。</p>
 
-<h2>1. 启动带 Paimon 的 Spark SQL</h2>
-<p>用 <code>--packages</code> 自动拉取 Paimon 的 Spark 包，并配好 catalog：</p>
-<div class="codeblock"><div class="bar"><span>启动 spark-sql（注意换成你的 Spark 版本对应的包）</span><button class="copy-btn">复制</button></div><pre><code class="language-bash">spark-sql \
+<h2>第一步：把 Spark 和 Paimon "接上头"</h2>
+<p>Spark 默认不认识 Paimon，得给它"装个插件"。最省事的办法是启动时用 <code>--packages</code> 让它自动联网下载 Paimon 的包，并顺手配好"仓库门牌"（catalog）：</p>
+<div class="codeblock"><div class="bar"><span>启动 spark-sql（把版本号换成你自己的 Spark 版本）</span><button class="copy-btn">复制</button></div><pre><code class="language-bash">spark-sql \
   --packages org.apache.paimon:paimon-spark-3.5:1.0.0 \
   --conf spark.sql.catalog.paimon=org.apache.paimon.spark.SparkCatalog \
   --conf spark.sql.catalog.paimon.warehouse=file:/tmp/paimon \
   --conf spark.sql.extensions=org.apache.paimon.spark.extensions.PaimonSparkSessionExtensions</code></pre></div>
 <div class="callout warn">
-<span class="tag">版本要对应</span>
-<p>包名里的 <code>paimon-spark-3.5</code> 要和你的 Spark 大版本一致（Spark 3.3/3.4/3.5 各有对应包），版本错配是最常见的启动失败原因。</p>
+<span class="tag">最常见的翻车点：版本要对上</span>
+<p>命令里的 <code>paimon-spark-3.5</code>，那个 <code>3.5</code> 必须和你的 Spark 大版本一模一样（你用 Spark 3.3 就写 3.3，用 3.4 就写 3.4）。<strong>版本对不上是启动失败最常见的原因</strong>，报错往往看着吓人，其实就是号没对上。先检查这个。</p>
 </div>
 
-<h2>2. 切换 catalog 并建表</h2>
-<div class="codeblock"><div class="bar"><span>spark-sql></span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 使用上面配置的 paimon catalog
+<h2>第二步：进仓库、建张表</h2>
+<p>接上头之后，先"走进"刚才配好的 paimon 仓库，再建一张带主键的表：</p>
+<div class="codeblock"><div class="bar"><span>在 spark-sql 提示符里执行</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 走进上面配好的 paimon 仓库
 USE paimon;
 
 CREATE TABLE IF NOT EXISTS sales (
@@ -82,42 +83,46 @@ CREATE TABLE IF NOT EXISTS sales (
     item   STRING,
     amount DOUBLE
 ) TBLPROPERTIES (
-    &#x27;primary-key&#x27; = &#x27;id&#x27;
+    &#x27;primary-key&#x27; = &#x27;id&#x27;    -- 指定主键，写同一个 id 会自动&quot;更新&quot;而不是堆两条
 );</code></pre></div>
-<div class="term"><div class="word">TBLPROPERTIES<span class="en">表属性</span></div><p>Spark 建表时通过它设置 Paimon 表的属性，比如主键 primary-key、桶数 bucket、合并引擎 merge-engine 等，作用等价于 Flink 建表里的 WITH(...)。</p></div>
+<p>注意那个 <code>TBLPROPERTIES</code>，它就是 Spark 给 Paimon 表"设参数"的地方。在 Flink 里你是写在 <code>WITH(...)</code> 里，在 Spark 里换成了 <code>TBLPROPERTIES(...)</code>，<strong>名字不同、干的是同一件事</strong>——告诉 Paimon 这张表的主键、桶数、合并方式等。</p>
+<div class="term"><div class="word">TBLPROPERTIES<span class="en">表属性</span></div><p>Spark 建表时设置 Paimon 表属性的地方，比如主键 primary-key、桶数 bucket、合并引擎 merge-engine。作用等同于 Flink 建表里的 WITH(...)，只是换了个写法。</p></div>
 
-<h2>3. 批量写入与查询</h2>
-<div class="codeblock"><div class="bar"><span>写入 + 查询</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 批量插入
+<h2>第三步：写数据，亲眼看"主键更新"是咋回事</h2>
+<p>下面这段最值得你亲手跑一遍——它能让你直观感受 Paimon 的"主键 upsert"：<strong>同一个 id 写两次，不会变成两条，而是后面的把前面的覆盖掉。</strong></p>
+<div class="codeblock"><div class="bar"><span>写入 → 再写同一个 id → 查询看结果</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 先插两条
 INSERT INTO sales VALUES (1,&#x27;apple&#x27;,9.9),(2,&#x27;banana&#x27;,3.5);
 
--- 同主键再插一条，会 upsert（更新）
+-- 再插一条 id=1 的，注意金额变了
 INSERT INTO sales VALUES (1,&#x27;apple&#x27;,12.0);
 
--- 查询：id=1 的 amount 已变成 12.0
+-- 查一下：id=1 的 amount 不是 9.9，而是被更新成了 12.0
 SELECT * FROM sales ORDER BY id;</code></pre></div>
-<p>注意：因为建表时设了 <code>primary-key='id'</code>，Spark 写入同主键时也会触发 Paimon 的 upsert 合并——和 Flink 写入时的语义一致，因为合并逻辑在 Paimon 这一层，与引擎无关。</p>
+<p>看到没？id=1 只剩一条、金额是最新的 12.0。这就是"主键自动更新"。<strong>更妙的是</strong>：这个"同 id 自动更新"的规则，无论你用 Flink 写还是 Spark 写，效果完全一样——因为<em>这套规则是冰箱（Paimon）自己定的，跟哪个厨师来操作没关系</em>。</p>
 
-<h2>4. 时间旅行（Spark 语法）</h2>
-<div class="codeblock"><div class="bar"><span>按版本 / 时间查历史</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 按快照版本号
+<h2>第四步：Spark 也能"穿越看历史"</h2>
+<p>时间旅行 Flink 有、Spark 也有，只是 SQL 写法是 Spark 自己的味道：</p>
+<div class="codeblock"><div class="bar"><span>回看历史版本</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 按存档编号看
 SELECT * FROM sales VERSION AS OF 1;
 
--- 按时间点
+-- 按时间点看
 SELECT * FROM sales TIMESTAMP AS OF &#x27;2026-06-23 10:00:00&#x27;;</code></pre></div>
 
-<h2>5. 用 Spark 做 compaction / 维护</h2>
-<p>Paimon 也提供了 Spark 端的存储过程（procedure）来做小文件合并等维护：</p>
-<div class="codeblock"><div class="bar"><span>调用 compact 存储过程</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">CALL paimon.sys.compact(table =&gt; &#x27;paimon.default.sales&#x27;);</code></pre></div>
+<h2>第五步：用 Spark 帮冰箱"整理整理"（compaction）</h2>
+<p>数据写多了，冰箱里会攒一堆零碎小文件，查起来变慢。Paimon 提供了让 Spark 来"整理合并"的小工具（叫存储过程 procedure），一行命令就能触发：</p>
+<div class="codeblock"><div class="bar"><span>手动触发小文件合并</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">CALL paimon.sys.compact(table =&gt; &#x27;paimon.default.sales&#x27;);</code></pre></div>
+<p>这相当于让大厨顺手把冰箱里散落的小盒子归并成大盒子，下次取用更利索。（compaction 的来龙去脉在第 10 章讲过，忘了可以翻回去。）</p>
 
 <div class="callout key">
-<span class="tag">体会一下</span>
-<p>同一张 <code>sales</code> 表，Flink 能写、Spark 也能写和查，时间旅行两边都支持——因为「主键合并、快照、文件布局」这些规则都由 Paimon 统一管理，<strong>引擎只是访问者</strong>。这正是表格式存在的意义。</p>
+<span class="tag">这一章最想让你"体会"到的</span>
+<p>同一张 <code>sales</code> 表——Flink 能写，Spark 也能写、能查，时间旅行两边都支持。<strong>为什么这么神奇？因为"主键怎么合并、快照怎么存、文件怎么布局"这些规矩，全是冰箱 Paimon 自己管的，厨师（引擎）只是来取放东西的"访客"。</strong>这正是"表格式"这种东西存在的最大意义：让不同引擎和平共处、共享一份数据。</p>
 </div>
 
-<div class="exercise"><div class="ex-h">练习 16-1</div><div><p>Flink 已经把 MySQL 的 orders 实时写进了 Paimon。现在数据团队想用 Spark 跑一个「最近 30 天按城市汇总」的离线报表。他们需要 Flink 停止写入吗？为什么？</p></div><details class="answer"><summary>查看参考答案</summary><p>不需要。Paimon 表支持多引擎并发读写，Spark 读取的是某个一致的快照，Flink 可以继续实时写入。Spark 读到的是它发起查询那一刻的快照数据，互不影响。</p></details></div>
+<div class="exercise"><div class="ex-h">练习 16-1</div><div><p>Flink 已经把 MySQL 的 orders 实时写进了 Paimon。现在数据团队想用 Spark 跑一个“最近 30 天按城市汇总”的离线报表。问：他们需要先让 Flink 停止写入吗？为什么？</p></div><details class="answer"><summary>查看参考答案</summary><p>不需要停。Paimon 支持多个引擎同时读写：Spark 读到的是它发起查询那一刻的某个一致快照，而 Flink 可以继续往里实时写新数据，两边互不打架。这正是“一份数据多人用”的好处。</p></details></div>
 
 <div class="callout tip">
-<span class="tag">本章目标</span>
-<p>能用 Spark SQL 配好 Paimon catalog、读写主键表、做时间旅行和 compaction，并理解「同一份数据流批引擎共享」。下一章看老牌的 Hive 怎么查 Paimon。</p>
+<span class="tag">这一章你要带走的</span>
+<p>会给 Spark 接上 Paimon、读写主键表、亲眼验证"同 id 自动更新"、做时间旅行和小文件合并，并真切体会到"<strong>流批两种厨师共享同一个冰箱</strong>"。下一章请出公司里最常见的"老资格"——Hive，看它怎么跟 Paimon 接轨。</p>
 </div>
 
 <div class="pager"><a class="prev" href="15-flink.html"><span class="dir">← 上一页</span><span class="pttl">Flink + Paimon</span></a><a class="next" href="17-hive.html"><span class="dir">下一页 →</span><span class="pttl">Hive + Paimon</span></a></div>

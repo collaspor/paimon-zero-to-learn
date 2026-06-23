@@ -58,19 +58,25 @@
 <main class="main"><div class="content">
 
 <span class="eyebrow">第 17 章 · 生态与引擎</span>
-<h1>Hive + Paimon：对接存量数仓</h1>
-<p class="lead">很多公司有大量存量的 Hive 数仓和 Hive Metastore（HMS）。Paimon 可以把表注册进 Hive Metastore，让 Hive、以及所有「认 HMS」的引擎都能查到这些表，平滑融入既有体系。</p>
+<h1>Hive + Paimon：让老数仓平滑接上新表</h1>
+<p class="lead">现实情况是：很多公司已经用 Hive 搭了好多年的数据仓库，里面有成百上千张老表，大家都习惯了。这时候你引入 Paimon，老板肯定会问：<strong>"能不能别推倒重来？让老工具也能查到新表？"</strong>这一章就解决这个问题——靠的是一个叫 <strong>Hive Metastore</strong> 的关键角色。</p>
 
-<h2>两件事别混淆</h2>
-<div class="term"><div class="word">Hive Metastore（HMS）<span class="en">Hive 元数据服务</span></div><p>一个集中存放「库、表、字段、分区」等元数据的服务。它本身不算数，只记录「有哪些表、表在哪、什么结构」。很多引擎（Hive/Spark/Flink/Trino）都靠它来发现表。</p></div><div class="term"><div class="word">Hive Catalog（Paimon 的）<span class="en">Hive 目录</span></div><p>Paimon 的一种 catalog 类型，把 Paimon 表的元数据登记到 HMS。这样不需要单独维护 Paimon 的元数据，存量体系就能发现这些表。</p></div>
+<h2>先搞懂一个角色：Hive Metastore 到底是干嘛的</h2>
+<p>这个名字听着唬人，其实特别好懂。打个比方：</p>
+<div class="callout key">
+<span class="tag">把它想成公司的"通讯录 / 资产登记册"</span>
+<p><strong>Hive Metastore（简称 HMS）就是一本登记册</strong>，上面记着："公司有哪些表、每张表叫啥名、有哪些字段、数据存在哪个位置"。它<em>本身不存数据、也不算数据</em>，只负责<strong>记账</strong>——告诉大家"有哪些表、表在哪儿"。</p>
+<p>妙的地方在于：<strong>好多工具都认这本登记册</strong>（Hive、Spark、Flink、Trino、StarRocks……）。只要你把一张表登记进去，所有认这本册子的工具，翻开就能查到它。</p>
+</div>
+<div class="term"><div class="word">Hive Metastore（HMS）<span class="en">Hive 元数据服务 / 登记册</span></div><p>一个集中记录“有哪些库、哪些表、什么字段、数据在哪”的服务。它不存数据本身，只管登记。很多引擎（Hive/Spark/Flink/Trino/StarRocks）都靠查它来发现表。</p></div><div class="term"><div class="word">Hive Catalog（Paimon 的一种）<span class="en">登记到 Hive 册子的方式</span></div><p>Paimon 的一种 catalog 类型。选了它，Paimon 建表时就顺手把这张表登记进 HMS 那本册子，于是老的 Hive 体系立刻就能“看见”这张新表。</p></div>
 
-<h2>1. 用 Hive Metastore 作为 Paimon Catalog</h2>
-<p>在 Flink（或 Spark）里建 catalog 时，指定 <code>metastore=hive</code>，Paimon 就会把表登记到 HMS：</p>
-<div class="codeblock"><div class="bar"><span>Flink SQL：基于 HMS 的 Paimon catalog</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">CREATE CATALOG paimon_hive WITH (
+<h2>第一步：建表时，告诉 Paimon "顺便登记进册子"</h2>
+<p>方法很简单：在 Flink（或 Spark）里建 catalog 时，加一句 <code>metastore = 'hive'</code>，再填上登记册的地址。这样以后建的 Paimon 表，都会自动在 HMS 那本册子上"挂个名"：</p>
+<div class="codeblock"><div class="bar"><span>Flink SQL：建一个“会自动登记到 HMS”的 Paimon catalog</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">CREATE CATALOG paimon_hive WITH (
     &#x27;type&#x27; = &#x27;paimon&#x27;,
-    &#x27;metastore&#x27; = &#x27;hive&#x27;,
-    &#x27;uri&#x27; = &#x27;thrift://localhost:9083&#x27;,     -- Hive Metastore 地址
-    &#x27;warehouse&#x27; = &#x27;hdfs:///warehouse/paimon&#x27;
+    &#x27;metastore&#x27; = &#x27;hive&#x27;,                       -- 关键：登记到 Hive 的册子
+    &#x27;uri&#x27; = &#x27;thrift://localhost:9083&#x27;,          -- 登记册（HMS）的地址
+    &#x27;warehouse&#x27; = &#x27;hdfs:///warehouse/paimon&#x27;    -- 数据实际存放的仓库
 );
 USE CATALOG paimon_hive;
 
@@ -78,33 +84,34 @@ CREATE TABLE user_log (
     id   BIGINT PRIMARY KEY NOT ENFORCED,
     name STRING
 );</code></pre></div>
-<p>建完后，这张 <code>user_log</code> 不仅是 Paimon 表，元数据也进了 HMS——Hive 端能「看见」它。</p>
+<p>建完这张 <code>user_log</code>，它有两个身份：① 它是一张实打实的 Paimon 表（数据按 Paimon 的方式存）；② 它的"名字和地址"已经登记进了 HMS。<strong>于是 Hive 那边，翻开册子就能看见它了。</strong></p>
 
-<h2>2. 在 Hive 里查询 Paimon 表</h2>
-<p>Hive 端需要加载 Paimon 的 Hive 连接 jar，然后就能像查普通表一样查：</p>
-<div class="codeblock"><div class="bar"><span>Hive CLI / Beeline</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 加载 Paimon 的 Hive connector（路径换成你的 jar）
+<h2>第二步：在 Hive 里直接查这张 Paimon 表</h2>
+<p>Hive 端要查 Paimon 表，得先给 Hive "装个能读 Paimon 的小工具"（一个 jar 包），之后就能像查普通老表一样查：</p>
+<div class="codeblock"><div class="bar"><span>在 Hive CLI 或 Beeline 里执行</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 先加载 Paimon 的 Hive 连接器（路径换成你机器上的 jar 位置）
 ADD JAR /opt/paimon/paimon-hive-connector.jar;
 
--- 直接查询上一步建的表
+-- 然后就能直接查上一步建的表了
 SELECT * FROM user_log LIMIT 10;</code></pre></div>
 <div class="callout warn">
-<span class="tag">版本与 jar</span>
-<p>Hive 集成对版本较敏感：要用与你的 Hive 版本匹配的 paimon-hive-connector jar，并确保 HMS 可访问。版本不匹配会出现找不到 SerDe / InputFormat 之类的错误。</p>
+<span class="tag">老规矩：注意版本和 jar</span>
+<p>Hive 这块对版本比较挑：要用<strong>和你 Hive 版本匹配</strong>的 paimon-hive-connector jar，还要保证能连上 HMS。版本不匹配时，常见报错是"找不到 SerDe / InputFormat"之类——看到这种错，先怀疑 jar 版本不对。</p>
 </div>
 
-<h2>3. 这样做的价值</h2>
+<h2>第三步：理解这么做"值在哪"</h2>
+<p>一张图说清楚：表只登记一次，所有认册子的工具都能用——</p>
 <div class="flow">
-<div class="node brand"><div class="nt">Paimon 表</div><div class="nd">登记到 HMS</div></div>
-<div class="arrow">↓ 共享同一份元数据</div>
-<div class="node"><div class="nt">Hive · Spark · Trino · StarRocks</div><div class="nd">都能发现并查询同一张表</div></div>
+<div class="node brand"><div class="nt">一张 Paimon 表</div><div class="nd">登记进 HMS 这本册子</div></div>
+<div class="arrow">↓ 大家共查这一本册子</div>
+<div class="node"><div class="nt">Hive · Spark · Trino · StarRocks</div><div class="nd">翻开册子都能发现、都能查同一张表</div></div>
 </div>
-<p>对存量数仓团队来说，意义是：<strong>不用推倒重来</strong>。新建的实时表用 Paimon，登记进熟悉的 HMS，老的查询工具链照样能用，迁移成本最低。</p>
+<p>对有老数仓的团队来说，这事的价值就一句话：<strong>不用推倒重来。</strong>新建的实时表用 Paimon，登记进大家熟悉的那本老册子（HMS），原来的查询工具、报表、脚本照样能跑，迁移成本压到最低。这也是为什么 Paimon 能"挤进"已经很成熟的公司体系里。</p>
 
-<div class="exercise"><div class="ex-h">练习 17-1</div><div><p>用一句话解释：为什么把 Paimon 表登记到 Hive Metastore，能让「不是 Hive 的引擎」（比如 Spark、StarRocks）也查到这张表？</p></div><details class="answer"><summary>查看参考答案</summary><p>因为 Spark、StarRocks 等引擎也支持把 Hive Metastore 作为元数据来源。HMS 是一个被广泛共享的「表目录」，只要表登记在里面，所有认 HMS 的引擎都能发现并查询它，而不只是 Hive 自己。</p></details></div>
+<div class="exercise"><div class="ex-h">练习 17-1</div><div><p>用一句大白话解释：为什么把 Paimon 表登记进 Hive Metastore，连“根本不是 Hive 的工具”（比如 Spark、StarRocks）也能查到这张表？</p></div><details class="answer"><summary>查看参考答案</summary><p>因为 Spark、StarRocks 这些工具也认 Hive Metastore 这本“登记册”。HMS 是一本被大家公用的“表目录”，只要表登记在里面，所有翻这本册子的工具都能发现并查询它——不是只有 Hive 自己能看。</p></details></div>
 
 <div class="callout tip">
-<span class="tag">本章目标</span>
-<p>理解 Hive Metastore 的角色，会用 <code>metastore=hive</code> 把 Paimon 表登记进 HMS，并在 Hive 端查询，明白这对融合存量数仓的价值。下一章上 StarRocks，体验对 Paimon 的极速查询。</p>
+<span class="tag">这一章你要带走的</span>
+<p>搞懂 Hive Metastore 就是一本"大家公用的表登记册"，会用 <code>metastore='hive'</code> 把 Paimon 表登记进去，并在 Hive 端查到它，明白这对融合老数仓有多省事。下一章请出"飞毛腿传菜员" StarRocks，体验对 Paimon 的秒级快查。</p>
 </div>
 
 <div class="pager"><a class="prev" href="16-spark.html"><span class="dir">← 上一页</span><span class="pttl">Spark + Paimon</span></a><a class="next" href="18-starrocks.html"><span class="dir">下一页 →</span><span class="pttl">StarRocks 极速查询</span></a></div>

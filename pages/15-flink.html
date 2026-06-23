@@ -58,76 +58,92 @@
 <main class="main"><div class="content">
 
 <span class="eyebrow">第 15 章 · 生态与引擎</span>
-<h1>Flink + Paimon：最佳拍档</h1>
-<p class="lead">Paimon 的前身就是 Flink Table Store，二者天生一对。前面第 8、9 章其实已经用 Flink 写过 Paimon 了，这一章系统梳理 Flink 怎么读写 Paimon，并补上「流式读取」「时间旅行」这些 Flink 专属玩法。</p>
+<h1>Flink + Paimon：天生一对的"实时厨师"</h1>
+<p class="lead">为什么把 Flink 放第一个讲？因为 <strong>Paimon 的"前身"就是 Flink 团队做的</strong>（以前叫 Flink Table Store），可以说 Paimon 是 Flink 亲手带大的孩子，俩人配合最默契。其实你在第 8、9 章已经用 Flink 写过 Paimon 了，这一章咱们把它俩的配合"系统地"再走一遍，并解锁两个 Flink 才有的拿手好戏：<strong>"订阅数据变化"</strong>和<strong>"穿越回看历史"</strong>。</p>
 
 <div class="callout note">
-<span class="tag">前置</span>
-<p>本章沿用第 7 章搭好的 Flink + Paimon 环境（<code>$FLINK_HOME/lib/</code> 里有 paimon-flink jar），命令都在 Flink SQL Client 里执行。</p>
+<span class="tag">动手前提</span>
+<p>这一章接着用第 7 章搭好的 Flink + Paimon 环境（也就是 <code>$FLINK_HOME/lib/</code> 里已经放了 paimon-flink 的 jar 包）。下面的命令都在 <strong>Flink SQL Client</strong> 里敲——就是那个能写 SQL 的交互窗口。</p>
 </div>
 
-<h2>1. 建 Catalog（回顾）</h2>
-<div class="codeblock"><div class="bar"><span>Flink SQL Client</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">CREATE CATALOG paimon WITH (
+<h2>第一步：先告诉 Flink "仓库在哪"</h2>
+<p>厨师上岗第一件事，是知道"冰箱在哪个房间"。在 Flink 里，这一步叫"建 Catalog"——你可以把 Catalog 理解成<strong>一张写着仓库地址的门牌</strong>。建好之后，Flink 就知道去哪儿找 Paimon 的表了。</p>
+<div class="codeblock"><div class="bar"><span>在 Flink SQL Client 里执行</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">CREATE CATALOG paimon WITH (
     &#x27;type&#x27; = &#x27;paimon&#x27;,
-    &#x27;warehouse&#x27; = &#x27;file:/tmp/paimon&#x27;
+    &#x27;warehouse&#x27; = &#x27;file:/tmp/paimon&#x27;   -- 仓库地址，这里用本地目录演示
 );
-USE CATALOG paimon;</code></pre></div>
 
-<h2>2. 批写 vs 流写</h2>
-<p>Flink 对 Paimon 的写入分两种模式，区别只在 <code>runtime-mode</code>：</p>
-<div class="codeblock"><div class="bar"><span>批量写入（一次性灌数据）</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;batch&#x27;;
+USE CATALOG paimon;   -- 切进这个仓库，之后建表查表都在这里面</code></pre></div>
+<p>执行完，Flink 就"认门"了。后面所有的建表、写入、查询，都是在这个 Paimon 仓库里进行。</p>
+
+<h2>第二步：往里写数据，有"批"和"流"两种姿势</h2>
+<p>同样是往冰箱里放东西，有两种节奏：</p>
+<ul>
+<li><strong>批量写（batch）</strong>：像<em>一次性把一周的菜买回来塞满冰箱</em>。数据是固定的一批，写完就结束。</li>
+<li><strong>流式写（streaming）</strong>：像<em>家里装了个自动补货机，源源不断地往里送</em>。数据持续不停地流进来，作业一直运行。</li>
+</ul>
+<p>在 Flink 里切换这两种姿势，只差一个开关 <code>runtime-mode</code>：</p>
+<div class="codeblock"><div class="bar"><span>姿势一：批量写（一次性灌一批数据）</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;batch&#x27;;
 
 CREATE TABLE IF NOT EXISTS dim_city (
     city_id INT PRIMARY KEY NOT ENFORCED,
     name    STRING
 );
-INSERT INTO dim_city VALUES (1,&#x27;北京&#x27;),(2,&#x27;上海&#x27;),(3,&#x27;深圳&#x27;);</code></pre></div><div class="codeblock"><div class="bar"><span>流式写入（持续不断）</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;streaming&#x27;;
-SET &#x27;execution.checkpointing.interval&#x27; = &#x27;10 s&#x27;;   -- 流写必须设
+INSERT INTO dim_city VALUES (1,&#x27;北京&#x27;),(2,&#x27;上海&#x27;),(3,&#x27;深圳&#x27;);</code></pre></div><div class="codeblock"><div class="bar"><span>姿势二：流式写（持续不停地往里送）</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;streaming&#x27;;
+SET &#x27;execution.checkpointing.interval&#x27; = &#x27;10 s&#x27;;   -- 流式写必须开这个，原因下面解释
 
 INSERT INTO dim_city
-SELECT city_id, name FROM some_streaming_source;</code></pre></div>
-<div class="term"><div class="word">checkpoint<span class="en">检查点</span></div><p>Flink 周期性给作业状态做的「存档」。Paimon 在每个 checkpoint 提交一次写入并生成 snapshot——所以流写一定要设 checkpoint，否则数据提交不了、查不到。</p></div>
+SELECT city_id, name FROM some_streaming_source;   -- 数据从上游源源不断地来</code></pre></div>
 
-<h2>3. 流式读取：Paimon 当成「带历史的 Kafka」</h2>
-<p>Flink 读 Paimon 最强大的能力是<strong>流式读取</strong>：不仅能读到当前快照，还能持续读出后续的<em>变更</em>（增删改）。</p>
-<div class="codeblock"><div class="bar"><span>流式读取一张主键表的变化</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;streaming&#x27;;
+<h3>插一句：checkpoint 是啥？为啥流式写非开不可？</h3>
+<p>打个比方：你在写一篇很长的文档，<strong>checkpoint 就是"自动保存"</strong>。Flink 每隔一段时间（比如 10 秒）就把当前进度存一次档。</p>
+<p>关键在于：<strong>Paimon 是在每次"自动保存"的那一刻，才真正把数据提交、生成一个新快照的。</strong>如果你不开自动保存（不设 checkpoint），数据就一直飘在内存里"没落地"，结果就是——<em>你流式写了半天，去查却什么都查不到</em>。这是新手最常见的坑之一，记牢：<strong>流式写，必开 checkpoint。</strong></p>
+<div class="term"><div class="word">checkpoint<span class="en">检查点 / 自动存档</span></div><p>Flink 周期性地给作业进度做的“存档”。Paimon 在每个 checkpoint 提交一次写入、生成一个 snapshot（快照）。所以流式写不开 checkpoint，数据就提交不了、也就查不到。</p></div>
 
--- 从最新快照开始，持续输出后续变更
+<h2>第三步：Flink 的拿手好戏——"订阅"数据的变化</h2>
+<p>这是 Flink 读 Paimon 最酷的能力，叫<strong>流式读取</strong>。普通读取是"拍张照看现在长啥样"；流式读取是<strong>"盯着这张表，谁一改我立刻知道"</strong>——新增、修改、删除，它都能持续地读出来。</p>
+<p>打个最贴切的比方：你可以把一张 Paimon 表当成<strong>能回放历史的"群聊"</strong>。你不仅能看到当前的聊天记录，还能"潜水盯着"，谁发新消息你马上收到。</p>
+<div class="codeblock"><div class="bar"><span>流式订阅一张表的所有变化</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;streaming&#x27;;
+
+-- 从最新快照开始，之后这张表谁一变，这里就持续吐出来
 SELECT * FROM dim_city /*+ OPTIONS(&#x27;scan.mode&#x27;=&#x27;latest&#x27;) */;</code></pre></div>
 <div class="callout key">
-<span class="tag">为什么这很重要</span>
-<p>这意味着 Paimon 表可以像消息队列一样被「订阅」：上游实时写入 Paimon，下游 Flink 作业流式读取做二次加工，形成<strong>实时数仓的分层（ODS→DWD→DWS）</strong>，而中间不再需要额外的 Kafka。</p>
+<span class="tag">为什么这事很了不起</span>
+<p>因为它意味着 <strong>Paimon 表能当"消息队列"用，省掉一个 Kafka</strong>。传统做法是：数据先进 Kafka 给下游订阅，再落一份到湖里存储——同一份数据存了两遍。有了 Paimon 流式读，<em>数据只在 Paimon 存一份，既能当仓库批量查，又能被下游像订阅消息一样实时消费</em>。这就是实时数仓里 ODS→DWD→DWS 一层层往下加工的底气，架构更简单、更省钱。</p>
 </div>
 
-<h2>4. 时间旅行：读历史版本</h2>
-<div class="codeblock"><div class="bar"><span>按快照 / 时间点查询</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;batch&#x27;;
+<h2>第四步：另一个好戏——"穿越"回看历史版本</h2>
+<p>这叫<strong>时间旅行</strong>。因为 Paimon 每次提交都会留一个"快照"（就像游戏存档），所以你能随时<em>读回某个历史时刻的数据长啥样</em>。误删了？算错了想对比？穿越回去看一眼就行。</p>
+<div class="codeblock"><div class="bar"><span>回看历史：按快照编号 或 按时间点</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;batch&#x27;;
 
--- 看有哪些快照
+-- 先看看这张表有哪些存档（快照）
 SELECT snapshot_id, commit_time FROM dim_city$snapshots;
 
--- 读第 3 个快照时的数据
+-- 读&quot;第 3 个存档&quot;那一刻的数据
 SELECT * FROM dim_city /*+ OPTIONS(&#x27;scan.snapshot-id&#x27;=&#x27;3&#x27;) */;
 
--- 或按时间点读（毫秒时间戳）
+-- 或者按某个时间点读（填毫秒时间戳）
 SELECT * FROM dim_city /*+ OPTIONS(&#x27;scan.timestamp-millis&#x27;=&#x27;1718000000000&#x27;) */;</code></pre></div>
+<p>是不是很像给数据装了个"后悔药 + 监控录像"？这在排查问题、做数据审计时特别有用。</p>
 
-<h2>5. 常见报错</h2>
+<h2>遇到问题别慌：常见报错对照</h2>
+<p>动手时八成会撞上下面几个，提前知道就不慌：</p>
 <div class="table-wrap">
 <table>
-<thead><tr><th>报错 / 现象</th><th>原因</th><th>解决</th></tr></thead>
+<thead><tr><th>你看到的现象</th><th>大白话原因</th><th>怎么解决</th></tr></thead>
 <tbody>
-<tr><td>ClassNotFound / Catalog 创建失败</td><td>paimon-flink jar 没放进 lib</td><td>把对应 Flink 版本的 paimon-flink-*.jar 放入 <code>$FLINK_HOME/lib/</code> 并重启集群</td></tr>
-<tr><td>流写后查不到数据</td><td>没设 checkpoint</td><td><code>SET 'execution.checkpointing.interval'='10 s'</code></td></tr>
-<tr><td>流读没有输出</td><td>表没有新变更 / scan.mode 不对</td><td>确认上游在写入，或用 <code>scan.mode='latest-full'</code> 先读全量再读增量</td></tr>
+<tr><td>建 Catalog 报 ClassNotFound</td><td>厨师没带工具——jar 包没放对</td><td>把对应 Flink 版本的 paimon-flink-*.jar 放进 <code>$FLINK_HOME/lib/</code>，<strong>重启集群</strong></td></tr>
+<tr><td>流式写了半天，查不到数据</td><td>没开"自动存档"，数据没落地</td><td>加上 <code>SET 'execution.checkpointing.interval'='10 s'</code></td></tr>
+<tr><td>流式读没反应、不吐数据</td><td>表压根没新变化，或读取模式不对</td><td>确认上游真的在写；或改用 <code>scan.mode='latest-full'</code> 先读全量再追增量</td></tr>
 </tbody>
 </table>
 </div>
 
-<div class="exercise"><div class="ex-h">练习 15-1</div><div><p>你想让下游 Flink 作业「订阅」一张 Paimon 主键表，只处理新发生的增删改，应该用什么读取方式？这相比传统「Paimon 之上再接一个 Kafka」有什么好处？</p></div><details class="answer"><summary>查看参考答案</summary><p>用流式读取（streaming 模式 + <code>scan.mode='latest'</code> 之类）订阅变更。好处：省掉了中间的 Kafka，数据只存一份在 Paimon 里，既能批查又能被流式订阅，降低了架构复杂度和存储成本。</p></details></div>
+<div class="exercise"><div class="ex-h">练习 15-1</div><div><p>你想让下游一个 Flink 作业“盯着”一张 Paimon 主键表，只处理新发生的增删改。① 该用哪种读取方式？② 比起“在 Paimon 旁边再架一个 Kafka 让大家订阅”，这么做好在哪？</p></div><details class="answer"><summary>查看参考答案</summary><p>① 用流式读取（streaming 模式 + <code>scan.mode='latest'</code> 之类），把表当消息流“订阅”。② 好处：省掉中间那个 Kafka，数据只在 Paimon 存一份，既能批量查又能被实时订阅，架构更简单、存储成本更低、也少了一处可能出故障的环节。</p></details></div>
 
 <div class="callout tip">
-<span class="tag">本章目标</span>
-<p>掌握 Flink 对 Paimon 的批写/流写、流式读取、时间旅行，理解「Paimon 可被流式订阅」对实时数仓分层的意义。下一章换 Spark，体会同一份数据被批引擎读写。</p>
+<span class="tag">这一章你要带走的</span>
+<p>会用 Flink 对 Paimon 做批写/流写、会"订阅变化"（流式读）、会"穿越看历史"（时间旅行），并且记住<strong>流式写必开 checkpoint</strong>。下一章换批量厨师 Spark 上场，你会亲眼看到——<em>同一个冰箱，换个厨师照样能用</em>。</p>
 </div>
 
 <div class="pager"><a class="prev" href="14-ecosystem.html"><span class="dir">← 上一页</span><span class="pttl">生态全景</span></a><a class="next" href="16-spark.html"><span class="dir">下一页 →</span><span class="pttl">Spark + Paimon</span></a></div>
