@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>核心概念与原理 · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文完整自学教程：Linux、SQL、大数据、CDC、湖仓、Paimon 核心概念、环境搭建、Quick Start、实战与排错。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="progress-bar" id="progress"></div>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="../index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门 · 完整自学</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="../index.html"><span class="idx">•</span>首页 · 学习总览</a>
+<a href="00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="01-linux.html"><span class="idx">1</span>Linux 与终端</a>
+<a href="02-sql.html"><span class="idx">2</span>SQL 与数据建模</a>
+<a href="03-bigdata.html"><span class="idx">3</span>大数据与计算引擎</a>
+<a href="04-cdc-lakehouse.html"><span class="idx">4</span>CDC 与湖仓</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="05-what-is-paimon.html"><span class="idx">5</span>Paimon 是什么</a>
+<a href="06-concepts.html"><span class="idx">6</span>核心概念与原理</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">动手实践</div><nav class="nav">
+<a href="07-env-setup.html"><span class="idx">7</span>环境搭建</a>
+<a href="08-quickstart.html"><span class="idx">8</span>Quick Start 上手</a>
+<a href="09-cdc-practice.html"><span class="idx">9</span>实战：CDC 入湖</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">进阶 · 拓展</div><nav class="nav">
+<a href="10-advanced.html"><span class="idx">10</span>进阶：表类型与调优</a>
+<a href="11-comparison.html"><span class="idx">11</span>对标对比与选型</a>
+<a href="12-faq.html"><span class="idx">12</span>常见问题与排错</a>
+<a href="13-resources.html"><span class="idx">13</span>学习资源与下一步</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">第 6 章 · 学 Paimon</span>
+<h1>核心概念与原理</h1>
+<p class="lead">这一章把 Paimon 文档里最常出现的术语，用通俗的话 + 图示讲一遍，并讲清它处理更新的底层原理。看懂这章，后面的上手和文档都会顺很多。</p>
+
+<h2>先建立一个核心直觉</h2>
+<p>Paimon 处理「更新」的方式和你想的不一样。它<strong>不会去原地修改旧文件</strong>，而是：</p>
+<ol>
+<li>把新数据<strong>写成新文件</strong>；</li>
+<li>记录一次<strong>元数据变化</strong>（这次新增了哪些文件、删了哪些）；</li>
+<li>用「版本（snapshot）」来决定哪些数据对外可见；</li>
+<li>后台<strong>异步合并</strong>，把同一主键的新旧数据收拢、清理过期文件。</li>
+</ol>
+<p>下面所有概念，都是围绕这个思路展开的。</p>
+
+<h2>表的物理结构</h2>
+<p>一张 Paimon 表在存储里大致是这样组织的（从上到下是「找数据」的路径）：</p>
+<div class="flow">
+<div class="node brand"><div class="nt">Snapshot（快照）</div><div class="nd">某个版本，读表的入口</div></div>
+<div class="arrow">↓ 指向</div>
+<div class="node"><div class="nt">Manifest（清单）</div><div class="nd">记录这个版本有哪些数据文件被加/删</div></div>
+<div class="arrow">↓ 指向</div>
+<div class="node"><div class="nt">Data File（数据文件）</div><div class="nd">真正存数据，列式（Parquet/ORC）</div></div>
+</div>
+<div class="callout note">
+<span class="tag">读表靠元数据，不是扫目录</span>
+<p>Paimon 读表是从 <code>snapshot → manifest → data file</code> 这棵元数据树出发的，而不是简单看目录里有哪些文件。这让它能做到事务一致和时间旅行。</p>
+</div>
+
+<h2>关键术语速查</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>术语</th><th>通俗解释</th></tr></thead>
+<tbody>
+<tr><td><code>snapshot</code></td><td>快照。某个时间点的「数据版本」，读表时从一个 snapshot 出发还原出完整视图。每次写入（提交）产生一个新 snapshot。</td></tr>
+<tr><td><code>manifest</code></td><td>清单文件。记录某个版本里有哪些数据文件被「加」或「删」。</td></tr>
+<tr><td><code>data file</code></td><td>真正存数据的文件，列式存储（如 Parquet/ORC），压缩比高、扫描快。</td></tr>
+<tr><td><code>LSM tree</code></td><td>「先写内存、再落盘成有序块、后台再合并」的结构，让高频更新很高效。下面详解。</td></tr>
+<tr><td><code>compaction</code></td><td>压缩合并。把零散的小文件 / 多层数据整理合并，提升查询性能、收拢同主键数据。</td></tr>
+<tr><td><code>changelog</code></td><td>变更日志。把数据的增删改作为「变化流」输出，供下游做增量计算。</td></tr>
+<tr><td><code>time travel</code></td><td>时间旅行。查询历史某个 snapshot 的数据，用于回溯、对账、排查。</td></tr>
+<tr><td><code>schema evolution</code></td><td>表结构演进。加字段、改类型时不用重写历史数据。</td></tr>
+<tr><td><code>bucket</code></td><td>桶。把数据按主键 hash 分到固定数量的桶里，每个桶是一个并行写入/合并单元。</td></tr>
+<tr><td><code>merge engine</code></td><td>合并引擎。决定主键相同的多条记录怎么合并（去重保留最新、部分更新、聚合等）。</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>核心原理：LSM 与主键更新</h2>
+<p>主键表为什么能扛住高频更新？因为它用了 <strong>LSM（Log-Structured Merge-Tree）</strong> 的思路：</p>
+<div class="flow">
+<div class="node"><div class="nt">① 写入内存缓冲</div><div class="nd">新数据先攒在内存（MemTable）</div></div>
+<div class="arrow">↓ 满了 / checkpoint</div>
+<div class="node"><div class="nt">② 落盘成有序块</div><div class="nd">刷成一个有序的数据文件（sorted run）</div></div>
+<div class="arrow">↓ 后台异步</div>
+<div class="node brand"><div class="nt">③ Compaction 合并</div><div class="nd">把多个块合并，按主键收拢、去重</div></div>
+</div>
+<p>这样做的好处：写入时<strong>不用每次都去翻整张表找旧记录改</strong>，而是先快速追加，后台再慢慢整理。代价是查询时可能要合并多个块的数据，所以需要 compaction 来控制块的数量。</p>
+
+<div class="callout key">
+<span class="tag">upsert 的本质</span>
+<p><strong>upsert = update + insert</strong>：主键已存在就更新、不存在就插入。在 Paimon 里，写一条主键相同的新记录，并不会立刻删掉旧记录，而是「新数据盖在上面」，读取/合并时按规则（merge engine）保留正确的那条。这就是它处理 CDC 的核心机制。</p>
+</div>
+
+<h2>三件最容易踩坑的事</h2>
+<div class="callout warn">
+<span class="tag">① 删除不等于立刻删文件</span>
+<p>删除往往先是「逻辑删除」——对用户不可见，但物理文件还在。真正的物理清理要等 <strong>snapshot 过期（expiration）</strong> 后才发生。所以刚删完，磁盘空间不会马上降。</p>
+</div>
+<div class="callout warn">
+<span class="tag">② 小文件与 checkpoint 强相关</span>
+<p>流式写入时，每个 Flink checkpoint 会提交一次、生成快照和文件。checkpoint 间隔越小，小文件越多。需要靠 compaction、合理的 bucket 数来治理（第 10 章详解）。</p>
+</div>
+<div class="callout warn">
+<span class="tag">③ 主键表必须先想清楚 bucket</span>
+<p>bucket 数决定了写入并行度和后续扩展性，建表时要根据数据量评估。改 bucket 数需要重组数据，成本不低。</p>
+</div>
+
+<div class="exercise"><div class="ex-h">练习 6-1</div><div><p>用自己的话回答：① 为什么说 Paimon 读表是「沿元数据树」而不是「扫目录」？② LSM 结构让主键更新高效的关键在哪？</p></div><details class="answer"><summary>查看参考答案</summary><p>① 因为 Paimon 通过 snapshot→manifest→data file 这棵元数据树来确定一个版本由哪些文件组成，这样能保证读到一致的版本、支持时间旅行，而不是依赖目录里恰好有哪些文件。② 关键在于写入时只追加（先内存、再有序落盘），不原地改旧文件；同主键的新旧数据由后台 compaction 异步合并，避免每次写都重写整表。</p></details></div>
+
+<div class="callout tip">
+<span class="tag">本章目标</span>
+<p>不要求全吃透，能在看到这些词时「说得出大概意思、知道它们怎么协作」就达标。接下来两章我们动手：先搭环境，再跑 Quick Start。</p>
+</div>
+
+<div class="pager"><a class="prev" href="05-what-is-paimon.html"><span class="dir">← 上一页</span><span class="pttl">Paimon 是什么</span></a><a class="next" href="07-env-setup.html"><span class="dir">下一页 →</span><span class="pttl">环境搭建</span></a></div>
+</div></main>
+<nav class="toc" id="toc"></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="../assets/main.js"></script>
+</body>
+</html>

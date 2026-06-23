@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>环境搭建 · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文完整自学教程：Linux、SQL、大数据、CDC、湖仓、Paimon 核心概念、环境搭建、Quick Start、实战与排错。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="progress-bar" id="progress"></div>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="../index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门 · 完整自学</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="../index.html"><span class="idx">•</span>首页 · 学习总览</a>
+<a href="00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="01-linux.html"><span class="idx">1</span>Linux 与终端</a>
+<a href="02-sql.html"><span class="idx">2</span>SQL 与数据建模</a>
+<a href="03-bigdata.html"><span class="idx">3</span>大数据与计算引擎</a>
+<a href="04-cdc-lakehouse.html"><span class="idx">4</span>CDC 与湖仓</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="05-what-is-paimon.html"><span class="idx">5</span>Paimon 是什么</a>
+<a href="06-concepts.html"><span class="idx">6</span>核心概念与原理</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">动手实践</div><nav class="nav">
+<a href="07-env-setup.html"><span class="idx">7</span>环境搭建</a>
+<a href="08-quickstart.html"><span class="idx">8</span>Quick Start 上手</a>
+<a href="09-cdc-practice.html"><span class="idx">9</span>实战：CDC 入湖</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">进阶 · 拓展</div><nav class="nav">
+<a href="10-advanced.html"><span class="idx">10</span>进阶：表类型与调优</a>
+<a href="11-comparison.html"><span class="idx">11</span>对标对比与选型</a>
+<a href="12-faq.html"><span class="idx">12</span>常见问题与排错</a>
+<a href="13-resources.html"><span class="idx">13</span>学习资源与下一步</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">第 7 章 · 学 Paimon</span>
+<h1>环境搭建</h1>
+<p class="lead">动手前先把环境装好。这一章带你从零装好 Java、Flink，并放好 Paimon 的 jar，确保下一章能直接跑通。每步都给了验证命令和常见报错。</p>
+
+<div class="callout warn">
+<span class="tag">版本说明</span>
+<p>下面用占位版本号示意（如 <code>flink-1.20.x</code>、<code>paimon-flink-1.20-x.x.x.jar</code>）。实际下载时，请到 <a href="https://flink.apache.org/downloads/" target="_blank" rel="noopener">Flink 下载页</a> 和 <a href="https://paimon.apache.org/docs/master/flink/quick-start/" target="_blank" rel="noopener">Paimon Quick Start</a> 确认<strong>互相匹配</strong>的版本——Paimon 的 jar 必须对应你装的 Flink 大版本。</p>
+</div>
+
+<h2>步骤总览</h2>
+<ol class="steps">
+<li>安装 Java（Flink 需要 JDK 11 或以上）。</li>
+<li>下载并解压 Flink。</li>
+<li>把 Paimon 的 bundled jar 放进 Flink 的 <code>lib/</code>。</li>
+<li>启动 Flink 本地集群，打开 SQL Client 验证。</li>
+</ol>
+
+<h2>1. 安装并验证 Java</h2>
+<div class="codeblock"><div class="bar"><span>检查是否已装 Java</span><button class="copy-btn">复制</button></div><pre><code class="language-bash">java -version
+# 期望看到 11 或更高，例如：
+# openjdk version &quot;11.0.x&quot;
+</code></pre></div>
+<p>如果没装：macOS 可用 <code>brew install openjdk@11</code>；Ubuntu 可用 <code>sudo apt install openjdk-11-jdk</code>。装好后设置环境变量（第 1 章讲过）：</p>
+<div class="codeblock"><div class="bar"><span>设置 JAVA_HOME</span><button class="copy-btn">复制</button></div><pre><code class="language-bash">export JAVA_HOME=$(/usr/libexec/java_home -v 11 2&gt;/dev/null || echo /usr/lib/jvm/java-11)
+export PATH=$JAVA_HOME/bin:$PATH
+java -version   # 再次确认</code></pre></div>
+
+<h2>2. 下载并解压 Flink</h2>
+<div class="codeblock"><div class="bar"><span>解压 Flink 到工作目录</span><button class="copy-btn">复制</button></div><pre><code class="language-bash"># 假设已下载 flink 安装包到当前目录
+tar -xzf flink-1.20.0-bin-scala_2.12.tgz
+
+# 设一个方便引用的变量，指向解压目录
+export FLINK_HOME=$(pwd)/flink-1.20.0
+echo $FLINK_HOME
+ls $FLINK_HOME   # 应能看到 bin/ conf/ lib/ 等目录</code></pre></div>
+
+<h2>3. 放入 Paimon jar</h2>
+<p>Paimon 提供「bundled jar」，直接丢进 Flink 的 <code>lib/</code> 即可被加载：</p>
+<div class="codeblock"><div class="bar"><span>拷贝 Paimon bundled jar</span><button class="copy-btn">复制</button></div><pre><code class="language-bash"># 把下载好的 paimon-flink jar 拷进 Flink lib
+cp paimon-flink-1.20-*.jar $FLINK_HOME/lib/
+
+# 确认进去了
+ls $FLINK_HOME/lib/ | grep paimon</code></pre></div>
+<div class="callout note">
+<span class="tag">关于 Hadoop 依赖</span>
+<p>若你把数据存本地（<code>file:/...</code>）做实验，通常无需额外 Hadoop 依赖。若要写 HDFS/对象存储，按官方说明补对应的 Hadoop / 文件系统依赖 jar。新手先用本地路径即可。</p>
+</div>
+
+<h2>4. 启动集群并打开 SQL Client</h2>
+<div class="codeblock"><div class="bar"><span>启动 Flink 本地集群</span><button class="copy-btn">复制</button></div><pre><code class="language-bash"># 启动本地集群
+$FLINK_HOME/bin/start-cluster.sh
+
+# 打开浏览器访问 Dashboard 确认集群起来了
+# http://localhost:8081
+
+# 打开 Flink SQL 交互客户端
+$FLINK_HOME/bin/sql-client.sh</code></pre></div>
+<p>看到 SQL Client 的提示符（一只松鼠 ASCII 图 + <code>Flink SQL></code>），说明环境就绪。下一章就在这里敲 SQL。</p>
+
+<h2>常见报错速查</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>现象</th><th>可能原因</th><th>解决</th></tr></thead>
+<tbody>
+<tr><td>启动报 <code>JAVA_HOME not set</code></td><td>没设 Java 环境变量</td><td>按上面设置 <code>JAVA_HOME</code> 并加进 <code>PATH</code></td></tr>
+<tr><td>SQL Client 里建 catalog 报 <code>ClassNotFound: paimon</code></td><td>Paimon jar 没放进 lib 或版本不匹配</td><td>确认 jar 在 <code>$FLINK_HOME/lib</code>，且对应 Flink 版本，<strong>重启集群</strong></td></tr>
+<tr><td>Dashboard 打不开 / 8081 无响应</td><td>集群没起来或端口被占</td><td>看 <code>$FLINK_HOME/log</code> 里日志；换端口或杀掉占用进程</td></tr>
+<tr><td>写入卡住、无数据落盘</td><td>流模式没开 checkpoint</td><td>设 <code>execution.checkpointing.interval</code>（下一章会设）</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout tip">
+<span class="tag">本章目标</span>
+<p>Java 能 <code>java -version</code>、Flink 集群能在 8081 看到、SQL Client 能打开。三者就绪，就可以进入下一章动手跑第一个 Paimon 示例了。</p>
+</div>
+
+<div class="pager"><a class="prev" href="06-concepts.html"><span class="dir">← 上一页</span><span class="pttl">核心概念与原理</span></a><a class="next" href="08-quickstart.html"><span class="dir">下一页 →</span><span class="pttl">Quick Start 上手</span></a></div>
+</div></main>
+<nav class="toc" id="toc"></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="../assets/main.js"></script>
+</body>
+</html>

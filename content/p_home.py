@@ -1,52 +1,11 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>首页 · 学习总览 · 从 0 学习 Apache Paimon</title>
-<meta name="description" content="面向零基础的 Apache Paimon 中文完整自学教程：Linux、SQL、大数据、CDC、湖仓、Paimon 核心概念、环境搭建、Quick Start、实战与排错。">
-<link rel="stylesheet" href="assets/style.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-</head>
-<body>
-<div class="progress-bar" id="progress"></div>
-<div class="topbar">
-  <button class="menu-btn" aria-label="打开菜单">☰</button>
-  <span class="logo">P</span>
-  <strong style="font-size:15px">Paimon 学习站</strong>
-</div>
-<div class="overlay" id="overlay"></div>
-<div class="layout">
-<aside class="sidebar" id="sidebar">
-<a href="index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门 · 完整自学</span></span></a>
-<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
-<a href="index.html"><span class="idx">•</span>首页 · 学习总览</a>
-<a href="pages/00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
-</nav></div>
-<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
-<a href="pages/01-linux.html"><span class="idx">1</span>Linux 与终端</a>
-<a href="pages/02-sql.html"><span class="idx">2</span>SQL 与数据建模</a>
-<a href="pages/03-bigdata.html"><span class="idx">3</span>大数据与计算引擎</a>
-<a href="pages/04-cdc-lakehouse.html"><span class="idx">4</span>CDC 与湖仓</a>
-</nav></div>
-<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
-<a href="pages/05-what-is-paimon.html"><span class="idx">5</span>Paimon 是什么</a>
-<a href="pages/06-concepts.html"><span class="idx">6</span>核心概念与原理</a>
-</nav></div>
-<div class="nav-group"><div class="nav-group-title">动手实践</div><nav class="nav">
-<a href="pages/07-env-setup.html"><span class="idx">7</span>环境搭建</a>
-<a href="pages/08-quickstart.html"><span class="idx">8</span>Quick Start 上手</a>
-<a href="pages/09-cdc-practice.html"><span class="idx">9</span>实战：CDC 入湖</a>
-</nav></div>
-<div class="nav-group"><div class="nav-group-title">进阶 · 拓展</div><nav class="nav">
-<a href="pages/10-advanced.html"><span class="idx">10</span>进阶：表类型与调优</a>
-<a href="pages/11-comparison.html"><span class="idx">11</span>对标对比与选型</a>
-<a href="pages/12-faq.html"><span class="idx">12</span>常见问题与排错</a>
-<a href="pages/13-resources.html"><span class="idx">13</span>学习资源与下一步</a>
-</nav></div>
-</aside>
-<main class="main"><div class="content">
+# -*- coding: utf-8 -*-
+"""首页 + 第 0 章 学习路线"""
 
+
+def build(code, term, exercise):
+    B = {}
+
+    B["index.html"] = """
 <span class="eyebrow">零基础 · 中文完整自学教程</span>
 <h1>从 0 学习 Apache Paimon</h1>
 <p class="lead">这是一个为<strong>完全没有大数据基础</strong>的人准备的教程。你不需要再去翻官方文档或其他资料——从终端命令、SQL，到 Flink、CDC、湖仓，再到 Paimon 的原理、上手与实战，全部在这个站里讲透。</p>
@@ -110,12 +69,69 @@
 <span class="tag">怎么用这个网站</span>
 <p>从左侧导航第 0 章开始，按顺序往下读。每页右侧有「本页目录」可快速跳转，顶部有阅读进度条，页面底部有「下一页」。代码块右上角可一键复制。</p>
 </div>
+"""
 
-<div class="pager"><a class="disabled"></a><a class="next" href="pages/00-roadmap.html"><span class="dir">下一页 →</span><span class="pttl">零基础学习路线</span></a></div>
-</div></main>
-<nav class="toc" id="toc"></nav>
+    B["pages/00-roadmap.html"] = """
+<span class="eyebrow">第 0 章 · 开始</span>
+<h1>零基础学习路线</h1>
+<p class="lead">Paimon 对零基础并不友好。最聪明的做法不是直接啃它，而是先补一层地基，再进入正题。这一章给你一张全局地图。</p>
+
+<h2>为什么不能直接学 Paimon</h2>
+<p>Paimon 的官方文档默认你已经懂 SQL、懂表、懂 Flink、懂数据湖。如果这些都不熟，你会卡在「这个词是什么意思」，而不是「这个设计为什么好」。结果就是看十分钟、放弃。</p>
+<p>所以本教程的策略是：<strong>先用四章把地基打牢，再正式进入 Paimon 本体</strong>。地基不深，但缺了会处处卡壳。</p>
+
+<div class="callout key">
+<span class="tag">核心思路</span>
+<p>不要以「学 Paimon」为起点，而要以「补齐学 Paimon 所需的基础」为起点。这样你会轻松很多，也更不容易放弃。</p>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="assets/main.js"></script>
-</body>
-</html>
+
+<h2>知识依赖关系</h2>
+<p>下面是各部分之间的依赖。箭头表示「先学上面，再学下面」：</p>
+<div class="flow">
+<div class="node"><div class="nt">Linux 与终端</div><div class="nd">能跑命令、懂路径</div></div>
+<div class="arrow">↓</div>
+<div class="node"><div class="nt">SQL 与数据建模</div><div class="nd">表 / 主键 / 分区 / 数仓</div></div>
+<div class="arrow">↓</div>
+<div class="node"><div class="nt">大数据与计算引擎</div><div class="nd">批 vs 流 / Spark / Flink</div></div>
+<div class="arrow">↓</div>
+<div class="node"><div class="nt">CDC 与湖仓</div><div class="nd">变更捕获 / 表格式由来</div></div>
+<div class="arrow">↓</div>
+<div class="node brand"><div class="nt">Apache Paimon</div><div class="nd">概念 → 上手 → 实战 → 调优</div></div>
+</div>
+
+<h2>建议时间安排</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>阶段</th><th>对应章节</th><th>学什么</th><th>建议时长</th><th>达标标志</th></tr></thead>
+<tbody>
+<tr><td>第一阶段</td><td>第 1–2 章</td><td>Linux 命令 + SQL + 数仓概念</td><td>约 1 周</td><td>能写简单查询、看懂表结构、会用终端</td></tr>
+<tr><td>第二阶段</td><td>第 3–4 章</td><td>批/流区别 + Spark/Flink + CDC + 湖仓</td><td>约 1–2 周</td><td>能说清流批差异、CDC 与湖仓是什么</td></tr>
+<tr><td>第三阶段</td><td>第 5–8 章</td><td>Paimon 概念 + 环境搭建 + Quick Start</td><td>约 1 周</td><td>能跑通最小示例、理解核心特性</td></tr>
+<tr><td>第四阶段</td><td>第 9–10 章</td><td>CDC 入湖实战 + 表类型与调优</td><td>约 1 周</td><td>能搭一条实时入湖链路</td></tr>
+<tr><td>第五阶段</td><td>第 11–13 章</td><td>选型对比 + 排错 + 继续提升</td><td>按需</td><td>能回答「为什么选 Paimon」</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>三种读法</h2>
+<div class="cards">
+<div class="card"><div class="ttl">完全零基础</div><div class="desc">从第 0 章一路读到第 13 章，别跳。每章练习都做一遍。</div></div>
+<div class="card"><div class="ttl">有 SQL/Linux 基础</div><div class="desc">快速扫第 1–2 章，从第 3 章开始认真读。</div></div>
+<div class="card"><div class="ttl">懂大数据，只想学 Paimon</div><div class="desc">直接从第 5 章开始，配合第 6–10 章动手。</div></div>
+</div>
+
+<div class="callout warn">
+<span class="tag">现在先别碰</span>
+<p>Paimon 源码、极复杂的 Flink 作业、LSM 底层论文级细节、四种表格式的深度选型辩论——这些现在学性价比太低，等你跑通 Quick Start、做完实战后再回头看。</p>
+</div>
+
+<h2>本周最小目标</h2>
+<ol class="steps">
+<li>学会基础 SQL 查询（<code>select</code> / <code>where</code> / <code>group by</code> / <code>join</code>）。</li>
+<li>理解「表、主键、分区、ETL、数仓」这几个词。</li>
+<li>知道 Spark、Flink、CDC 分别是干什么的。</li>
+</ol>
+<p>完成这三件事，再看 Paimon 就不会完全懵。下一章我们从最基础的 Linux 与终端开始。</p>
+"""
+
+    return B

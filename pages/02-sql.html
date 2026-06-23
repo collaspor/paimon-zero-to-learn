@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL 与数据建模 · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文完整自学教程：Linux、SQL、大数据、CDC、湖仓、Paimon 核心概念、环境搭建、Quick Start、实战与排错。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="progress-bar" id="progress"></div>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="../index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门 · 完整自学</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="../index.html"><span class="idx">•</span>首页 · 学习总览</a>
+<a href="00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="01-linux.html"><span class="idx">1</span>Linux 与终端</a>
+<a href="02-sql.html"><span class="idx">2</span>SQL 与数据建模</a>
+<a href="03-bigdata.html"><span class="idx">3</span>大数据与计算引擎</a>
+<a href="04-cdc-lakehouse.html"><span class="idx">4</span>CDC 与湖仓</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="05-what-is-paimon.html"><span class="idx">5</span>Paimon 是什么</a>
+<a href="06-concepts.html"><span class="idx">6</span>核心概念与原理</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">动手实践</div><nav class="nav">
+<a href="07-env-setup.html"><span class="idx">7</span>环境搭建</a>
+<a href="08-quickstart.html"><span class="idx">8</span>Quick Start 上手</a>
+<a href="09-cdc-practice.html"><span class="idx">9</span>实战：CDC 入湖</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">进阶 · 拓展</div><nav class="nav">
+<a href="10-advanced.html"><span class="idx">10</span>进阶：表类型与调优</a>
+<a href="11-comparison.html"><span class="idx">11</span>对标对比与选型</a>
+<a href="12-faq.html"><span class="idx">12</span>常见问题与排错</a>
+<a href="13-resources.html"><span class="idx">13</span>学习资源与下一步</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">第 2 章 · 打基础</span>
+<h1>SQL 与数据建模</h1>
+<p class="lead">SQL 是你和数据对话的语言，Paimon 的建表、写入、查询全靠它。这一章带你掌握够用的查询能力，并理解表、主键、分区、ETL、数仓这些核心概念。</p>
+
+<h2>表是什么</h2>
+<p>一张<strong>表（Table）</strong>就像 Excel 的一张工作表：</p>
+<ul>
+<li><strong>列 / 字段（Column）</strong>：表的每一项属性，如 <code>order_id</code>、<code>amount</code>。</li>
+<li><strong>行 / 记录（Row）</strong>：一条具体数据，如「订单 1001，金额 200」。</li>
+<li><strong>数据类型</strong>：每列有类型，如整数 <code>INT</code>、长整数 <code>BIGINT</code>、字符串 <code>STRING</code>、小数 <code>DECIMAL</code>。</li>
+</ul>
+<div class="codeblock"><div class="bar"><span>建一张订单表</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">CREATE TABLE orders (
+    order_id   BIGINT,
+    user_id    BIGINT,
+    city       STRING,
+    amount     DECIMAL(10, 2),
+    created_at TIMESTAMP
+);</code></pre></div>
+
+<h2>核心查询：SELECT</h2>
+<p>查询是 SQL 用得最多的能力。先掌握这四件事：<strong>选列、过滤、聚合、排序</strong>。</p>
+<div class="codeblock"><div class="bar"><span>查询：选列 + 过滤</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 从订单表取 user_id 和 amount
+-- 只要北京、金额大于 100 的订单
+SELECT user_id, amount
+FROM orders
+WHERE city = &#x27;Beijing&#x27; AND amount &gt; 100;</code></pre></div>
+<div class="codeblock"><div class="bar"><span>聚合：分组统计</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 按城市统计：订单数、总金额、平均金额
+SELECT
+    city,
+    COUNT(*)     AS order_cnt,
+    SUM(amount)  AS total_amount,
+    AVG(amount)  AS avg_amount
+FROM orders
+GROUP BY city
+ORDER BY total_amount DESC;</code></pre></div>
+<p>常用聚合函数：<code>COUNT</code>（计数）、<code>SUM</code>（求和）、<code>AVG</code>（平均）、<code>MAX</code>/<code>MIN</code>（最大/最小）。<code>GROUP BY</code> 决定「按什么分组」。</p>
+
+<h2>关联：JOIN</h2>
+<p>当信息分散在多张表，用 <code>JOIN</code> 把它们拼起来：</p>
+<div class="codeblock"><div class="bar"><span>把订单表和用户表拼起来</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- orders 里只有 user_id，想知道用户名要去 users 表取
+SELECT o.order_id, u.name, o.amount
+FROM orders o
+JOIN users u ON o.user_id = u.user_id;</code></pre></div>
+<div class="callout note">
+<span class="tag">JOIN 直觉</span>
+<p>JOIN 就是「按某个相同的字段（这里是 <code>user_id</code>）把两张表对齐拼接」。在实时数仓里，把多张表 JOIN 成一张「宽表」是非常常见的需求，也是 Paimon 的典型用途之一。</p>
+</div>
+
+<h2>必懂概念</h2>
+<div class="term"><div class="word">主键 PRIMARY KEY<span class="en">Primary Key</span></div><p>能唯一标识一行的字段，比如订单号。主键相同就认为是同一条记录——这点在 Paimon 的「更新（upsert）」里至关重要：主键相同的新数据会覆盖旧数据。</p></div><div class="term"><div class="word">分区 PARTITION<span class="en">Partition</span></div><p>把一张大表按某字段（常见是日期）切成多块存放，比如按 dt=20260101 一天一块。查询时只扫需要的分区，速度更快、成本更低。</p></div><div class="term"><div class="word">ETL<span class="en">Extract-Transform-Load</span></div><p>抽取（从源头取数据）→ 转换（清洗、加工）→ 加载（写入目标表）。数据平台每天都在做这件事，CDC 入湖本质也是一种 ETL。</p></div><div class="term"><div class="word">数据仓库 数仓<span class="en">Data Warehouse</span></div><p>专门用于分析的「大表仓库」。和支撑业务的数据库不同，它面向报表、统计、离线分析。理解数仓是理解「湖仓（Lakehouse）」的前提，下一阶段会讲。</p></div>
+
+<h2>分区表长什么样</h2>
+<div class="codeblock"><div class="bar"><span>带分区的表</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 按日期 dt 分区，每天的数据单独一块
+CREATE TABLE orders_partitioned (
+    order_id BIGINT,
+    amount   DECIMAL(10,2),
+    dt       STRING       -- 分区字段，如 &#x27;20260101&#x27;
+) PARTITIONED BY (dt);
+
+-- 查询只扫某一天，速度快
+SELECT SUM(amount) FROM orders_partitioned WHERE dt = &#x27;20260101&#x27;;</code></pre></div>
+
+<div class="exercise"><div class="ex-h">练习 2-1</div><div><p>有一张 <code>orders(order_id, city, amount)</code> 表。请写 SQL：统计每个城市金额大于 50 的订单数量，按数量从多到少排序。</p></div><details class="answer"><summary>查看参考答案</summary><div class="codeblock"><div class="bar"><span>参考答案</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SELECT city, COUNT(*) AS cnt
+FROM orders
+WHERE amount &gt; 50
+GROUP BY city
+ORDER BY cnt DESC;</code></pre></div></details></div>
+
+<div class="callout tip">
+<span class="tag">本章目标</span>
+<p>能看懂表结构、写简单查询（选列/过滤/聚合/排序/关联），并说清主键、分区、ETL、数仓是什么。尤其是<strong>主键</strong>和<strong>分区</strong>，直接关系到 Paimon 为什么擅长更新。下一章进入大数据计算引擎。</p>
+</div>
+
+<div class="pager"><a class="prev" href="01-linux.html"><span class="dir">← 上一页</span><span class="pttl">Linux 与终端</span></a><a class="next" href="03-bigdata.html"><span class="dir">下一页 →</span><span class="pttl">大数据与计算引擎</span></a></div>
+</div></main>
+<nav class="toc" id="toc"></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="../assets/main.js"></script>
+</body>
+</html>

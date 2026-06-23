@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大数据与计算引擎 · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文完整自学教程：Linux、SQL、大数据、CDC、湖仓、Paimon 核心概念、环境搭建、Quick Start、实战与排错。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="progress-bar" id="progress"></div>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="../index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门 · 完整自学</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="../index.html"><span class="idx">•</span>首页 · 学习总览</a>
+<a href="00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="01-linux.html"><span class="idx">1</span>Linux 与终端</a>
+<a href="02-sql.html"><span class="idx">2</span>SQL 与数据建模</a>
+<a href="03-bigdata.html"><span class="idx">3</span>大数据与计算引擎</a>
+<a href="04-cdc-lakehouse.html"><span class="idx">4</span>CDC 与湖仓</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="05-what-is-paimon.html"><span class="idx">5</span>Paimon 是什么</a>
+<a href="06-concepts.html"><span class="idx">6</span>核心概念与原理</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">动手实践</div><nav class="nav">
+<a href="07-env-setup.html"><span class="idx">7</span>环境搭建</a>
+<a href="08-quickstart.html"><span class="idx">8</span>Quick Start 上手</a>
+<a href="09-cdc-practice.html"><span class="idx">9</span>实战：CDC 入湖</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">进阶 · 拓展</div><nav class="nav">
+<a href="10-advanced.html"><span class="idx">10</span>进阶：表类型与调优</a>
+<a href="11-comparison.html"><span class="idx">11</span>对标对比与选型</a>
+<a href="12-faq.html"><span class="idx">12</span>常见问题与排错</a>
+<a href="13-resources.html"><span class="idx">13</span>学习资源与下一步</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">第 3 章 · 打基础</span>
+<h1>大数据与计算引擎</h1>
+<p class="lead">这一章讲清 Paimon 所在的世界：什么是批处理和流处理，Hadoop/HDFS 是什么，Spark 和 Flink 各管什么、为什么 Flink 是 Paimon 的最佳搭档。</p>
+
+<h2>为什么需要「大数据」技术</h2>
+<p>当数据量大到一台机器存不下、算不动时，就要把数据和计算<strong>分散到很多台机器上并行处理</strong>。这就是大数据技术解决的核心问题：<strong>分布式存储 + 分布式计算</strong>。</p>
+
+<h2>Hadoop 与 HDFS</h2>
+<div class="term"><div class="word">HDFS<span class="en">Hadoop Distributed File System</span></div><p>Hadoop 的分布式文件系统，把一个大文件切块、分散存到多台机器，并保留多份副本防丢。很多数据湖（包括 Paimon）可以把数据存在 HDFS 上，也可以存在对象存储（如 S3、OSS）或本地。</p></div>
+<p>你现阶段只需知道：HDFS / 对象存储是「数据放哪儿」的底层。Paimon 把表数据以文件形式存进去，自己管理这些文件的组织方式。</p>
+
+<h2>批处理 vs 流处理</h2>
+<p>这是最重要的一组概念。</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th></th><th>批处理（Batch）</th><th>流处理（Streaming）</th></tr></thead>
+<tbody>
+<tr><td>处理方式</td><td>攒一批数据，定时跑一次</td><td>数据来一条处理一条，持续运行</td></tr>
+<tr><td>时效</td><td>一般 T+1（隔天出结果）</td><td>秒级 / 分钟级</td></tr>
+<tr><td>典型场景</td><td>每日报表、离线统计</td><td>实时大屏、实时风控、实时入湖</td></tr>
+<tr><td>代表引擎</td><td>Spark（也支持流）</td><td>Flink（流处理见长）</td></tr>
+</tbody>
+</table>
+</div>
+<blockquote>批处理像「每天结算一次」，流处理像「随时实时记账」。</blockquote>
+
+<h2>Spark 和 Flink</h2>
+<h3>Apache Spark</h3>
+<p>大数据领域最流行的计算引擎之一，<strong>批处理和分析见长</strong>，生态成熟，常用于离线数仓、机器学习。也支持流处理（Structured Streaming），但本质偏「微批」。</p>
+<h3>Apache Flink</h3>
+<p><strong>流处理见长</strong>的引擎，强在低延迟、状态管理、Exactly-Once 语义。它是 Paimon 的「最佳搭档」——Paimon 最早就诞生在 Flink 社区，原名就叫 <strong>Flink Table Store</strong>。</p>
+
+<div class="callout key">
+<span class="tag">为什么 Paimon 和 Flink 绑得这么紧</span>
+<p>Paimon 是为「实时」而生的，而实时的核心引擎就是 Flink。Flink 负责「算」（接入变更、做计算），Paimon 负责「存」（高效地存下不断变化的数据并支持快速查询）。两者配合，构成实时湖仓的核心。</p>
+</div>
+
+<h2>一张图看清角色分工</h2>
+<div class="flow">
+<div class="node"><div class="nt">数据源</div><div class="nd">MySQL / Kafka / 日志</div></div>
+<div class="arrow">↓</div>
+<div class="node"><div class="nt">计算引擎</div><div class="nd">Flink（流）/ Spark（批）</div></div>
+<div class="arrow">↓ 写入</div>
+<div class="node brand"><div class="nt">存储层</div><div class="nd">Paimon 表（在 HDFS / S3 / 本地）</div></div>
+<div class="arrow">↓ 查询</div>
+<div class="node"><div class="nt">查询引擎</div><div class="nd">Flink / Spark / Trino / StarRocks</div></div>
+</div>
+<p>记住这个分工：<strong>引擎负责算，Paimon 负责存，查询引擎负责取。</strong>Paimon 处在「存储层」，是连接「实时写入」和「快速查询」的枢纽。</p>
+
+<div class="exercise"><div class="ex-h">练习 3-1</div><div><p>用自己的话说清楚：① 批处理和流处理最大的区别是什么？② 在「MySQL → Flink → Paimon → Spark 查询」这条链路里，Flink、Paimon、Spark 各自扮演什么角色？</p></div><details class="answer"><summary>查看参考答案</summary><p>① 批处理是攒一批定时跑、时效 T+1；流处理是来一条算一条、持续运行、秒级时效。② Flink 负责实时接入与计算并写入；Paimon 负责存储这些不断变化的数据并支持快速查询；Spark 负责对 Paimon 里的数据做批量分析/查询。</p></details></div>
+
+<div class="callout tip">
+<span class="tag">本章目标</span>
+<p>能说清批/流区别，知道 HDFS、Spark、Flink 各是什么、在链路里的角色。下一章讲两个直接通往 Paimon 的概念：CDC 与湖仓。</p>
+</div>
+
+<div class="pager"><a class="prev" href="02-sql.html"><span class="dir">← 上一页</span><span class="pttl">SQL 与数据建模</span></a><a class="next" href="04-cdc-lakehouse.html"><span class="dir">下一页 →</span><span class="pttl">CDC 与湖仓</span></a></div>
+</div></main>
+<nav class="toc" id="toc"></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="../assets/main.js"></script>
+</body>
+</html>

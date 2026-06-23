@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CDC 与湖仓 · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文完整自学教程：Linux、SQL、大数据、CDC、湖仓、Paimon 核心概念、环境搭建、Quick Start、实战与排错。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="progress-bar" id="progress"></div>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="../index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门 · 完整自学</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="../index.html"><span class="idx">•</span>首页 · 学习总览</a>
+<a href="00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="01-linux.html"><span class="idx">1</span>Linux 与终端</a>
+<a href="02-sql.html"><span class="idx">2</span>SQL 与数据建模</a>
+<a href="03-bigdata.html"><span class="idx">3</span>大数据与计算引擎</a>
+<a href="04-cdc-lakehouse.html"><span class="idx">4</span>CDC 与湖仓</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="05-what-is-paimon.html"><span class="idx">5</span>Paimon 是什么</a>
+<a href="06-concepts.html"><span class="idx">6</span>核心概念与原理</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">动手实践</div><nav class="nav">
+<a href="07-env-setup.html"><span class="idx">7</span>环境搭建</a>
+<a href="08-quickstart.html"><span class="idx">8</span>Quick Start 上手</a>
+<a href="09-cdc-practice.html"><span class="idx">9</span>实战：CDC 入湖</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">进阶 · 拓展</div><nav class="nav">
+<a href="10-advanced.html"><span class="idx">10</span>进阶：表类型与调优</a>
+<a href="11-comparison.html"><span class="idx">11</span>对标对比与选型</a>
+<a href="12-faq.html"><span class="idx">12</span>常见问题与排错</a>
+<a href="13-resources.html"><span class="idx">13</span>学习资源与下一步</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">第 4 章 · 打基础</span>
+<h1>CDC 与湖仓</h1>
+<p class="lead">这是地基的最后一章，也是离 Paimon 最近的一章。讲清 CDC 是什么、数据湖/数仓/湖仓怎么演进、以及「表格式（table format）」这个 Paimon 所属的品类为什么会出现。</p>
+
+<h2>CDC：变更数据捕获</h2>
+<div class="term"><div class="word">CDC<span class="en">Change Data Capture</span></div><p>把业务数据库（如 MySQL）里发生的「增、删、改」实时捕获出来，变成一条条变更记录，喂给下游系统。常见实现：读取数据库的 binlog（变更日志）。</p></div>
+<p>举例：用户在 App 下了一单，MySQL 里 <code>orders</code> 表插入一行；用户取消订单，这行被更新或删除。CDC 能把这些「插入/更新/删除」实时同步出来。</p>
+<div class="callout note">
+<span class="tag">CDC 的典型链路</span>
+<p>很多实时数仓的第一步就是：<strong>MySQL → CDC → Flink → Paimon</strong>。把线上数据库的变化实时灌进数据湖——这正是 Paimon 最擅长的场景之一，第 9 章会带你亲手做一遍。</p>
+</div>
+
+<h2>从数据库到数仓，再到数据湖</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>品类</th><th>是什么</th><th>擅长</th><th>短板</th></tr></thead>
+<tbody>
+<tr><td>业务数据库</td><td>支撑线上业务的库（MySQL 等）</td><td>高频增删改、事务</td><td>不适合大规模分析</td></tr>
+<tr><td>数据仓库</td><td>面向分析的结构化大表仓库</td><td>复杂查询、报表</td><td>偏离线、扩展贵、不灵活</td></tr>
+<tr><td>数据湖</td><td>用开放文件格式存海量原始数据</td><td>便宜、灵活、可存各种数据</td><td>早期缺事务/更新能力</td></tr>
+<tr><td>湖仓一体</td><td>在数据湖上补齐数仓能力</td><td>兼顾便宜灵活与可靠分析</td><td>需要「表格式」来支撑</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>什么是「湖仓一体」</h2>
+<div class="term"><div class="word">湖仓一体<span class="en">Lakehouse</span></div><p>把「数据湖的低成本、开放、灵活」和「数据仓库的事务、更新、高效查询」结合起来的架构。核心是在廉价的文件存储之上，加一层能管理事务、更新、版本的「表格式」。</p></div>
+
+<h2>关键角色：表格式（Table Format）</h2>
+<p>数据湖把数据存成一堆文件（如 Parquet）。但「一堆文件」不等于「一张能可靠读写的表」——谁记录有哪些文件？怎么支持更新和删除？怎么保证读到一致的数据？这就是<strong>表格式</strong>要解决的。</p>
+<div class="term"><div class="word">表格式<span class="en">Table Format</span></div><p>在数据湖文件之上的一层「元数据管理协议」。它记录一张表由哪些文件组成、如何演进、如何支持事务/更新/时间旅行。Apache Paimon、Iceberg、Hudi、Delta Lake 都是表格式。</p></div>
+<div class="callout key">
+<span class="tag">关键认知</span>
+<p><strong>Paimon 就是一种表格式。</strong>它的定位不是数据库，也不是计算引擎，而是「让数据湖里的文件，表现得像一张支持实时更新、可时间旅行的表」。而 Paimon 的差异化是：用 LSM 结构把<strong>实时更新</strong>做到极致。</p>
+</div>
+
+<h2>把四章串起来</h2>
+<div class="flow">
+<div class="node"><div class="nt">业务库变更</div><div class="nd">MySQL（第 2 章：表/主键）</div></div>
+<div class="arrow">↓ <small>CDC 捕获（本章）</small></div>
+<div class="node"><div class="nt">Flink 实时计算</div><div class="nd">（第 3 章：流处理）</div></div>
+<div class="arrow">↓ 写入</div>
+<div class="node brand"><div class="nt">Paimon 表格式</div><div class="nd">湖仓存储层（本章）</div></div>
+<div class="arrow">↓ <small>SQL 查询（第 2 章）</small></div>
+<div class="node"><div class="nt">分析 / 报表</div><div class="nd">Spark / Trino 等</div></div>
+</div>
+
+<div class="exercise"><div class="ex-h">练习 4-1</div><div><p>请回答：① CDC 解决了什么问题？② 「表格式」在数据湖里扮演什么角色，Paimon 属于哪一类？</p></div><details class="answer"><summary>查看参考答案</summary><p>① CDC 把数据库的增删改实时捕获出来，让下游能实时拿到数据变化（而不用定时全量拉取）。② 表格式是数据湖文件之上的元数据管理层，让一堆文件表现得像一张支持事务/更新/版本的表；Paimon 就是一种表格式，特点是用 LSM 把实时更新做得很强。</p></details></div>
+
+<div class="callout tip">
+<span class="tag">地基完成</span>
+<p>恭喜，四层地基已经打完。你现在具备了理解 Paimon 所需的全部背景知识。下一章正式认识 Paimon。</p>
+</div>
+
+<div class="pager"><a class="prev" href="03-bigdata.html"><span class="dir">← 上一页</span><span class="pttl">大数据与计算引擎</span></a><a class="next" href="05-what-is-paimon.html"><span class="dir">下一页 →</span><span class="pttl">Paimon 是什么</span></a></div>
+</div></main>
+<nav class="toc" id="toc"></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="../assets/main.js"></script>
+</body>
+</html>
