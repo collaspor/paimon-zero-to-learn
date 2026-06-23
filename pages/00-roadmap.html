@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>零基础学习路线 · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文学习教程：预备知识、核心概念、Quick Start 与对标对比。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="../index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="../index.html"><span class="idx">•</span>首页 · 学习总览</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+<a href="01-prerequisites.html"><span class="idx">1</span>预备知识</a>
+<a href="02-stream-batch.html"><span class="idx">2</span>计算基础</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="03-what-is-paimon.html"><span class="idx">3</span>Paimon 是什么</a>
+<a href="04-concepts.html"><span class="idx">4</span>核心概念</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">拓展</div><nav class="nav">
+<a href="05-quickstart.html"><span class="idx">5</span>Quick Start 上手</a>
+<a href="06-comparison.html"><span class="idx">6</span>对标对比</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">第 0 章</span>
+<h1>零基础学习路线</h1>
+<p class="lead">Paimon 对零基础并不友好。最聪明的做法不是直接学它，而是先补一层地基，再进入正题。</p>
+
+<h2>为什么不能直接学 Paimon</h2>
+<p>Paimon 的文档默认你已经懂 SQL、懂表、懂 Flink、懂数据湖。如果这些都不熟，你会卡在「这个词是什么意思」，而不是「这个设计为什么好」。所以我们先打地基。</p>
+
+<h2>四层地基 → Paimon</h2>
+<p>按下面顺序学，每一层都为下一层做铺垫：</p>
+<div class="cards">
+<div class="card"><span class="num">第 1 层</span><div class="ttl">工具基础</div><div class="desc">Linux 命令、文件路径、终端操作。目标：能照着教程执行最小命令。</div></div>
+<div class="card"><span class="num">第 2 层</span><div class="ttl">数据基础</div><div class="desc">SQL、表、主键、分区、ETL、数仓。目标：理解数据怎么被存、查、加工。</div></div>
+<div class="card"><span class="num">第 3 层</span><div class="ttl">计算基础</div><div class="desc">批 vs 流、Spark/Flink、CDC。目标：知道 Paimon 为什么常配 Flink。</div></div>
+<div class="card"><span class="num">第 4 层</span><div class="ttl">湖仓概念</div><div class="desc">snapshot、compaction、time travel。目标：看懂 Paimon 文档的术语。</div></div>
+</div>
+
+<h2>建议时间安排</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>阶段</th><th>学什么</th><th>建议时长</th><th>达标标志</th></tr></thead>
+<tbody>
+<tr><td>第一阶段</td><td>Linux 基础 + SQL 基础 + 数仓概念</td><td>约 1 周</td><td>能写简单查询、看懂表结构</td></tr>
+<tr><td>第二阶段</td><td>批/流区别 + Spark/Flink + CDC</td><td>约 1–2 周</td><td>能说清流批差异和 CDC 是什么</td></tr>
+<tr><td>第三阶段</td><td>Paimon 概念 + Quick Start</td><td>约 3–5 天</td><td>能跑通最小示例、理解核心特性</td></tr>
+<tr><td>第四阶段</td><td>对标对比 + 实践文章</td><td>按需</td><td>能回答「为什么选 Paimon」</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout warn">
+<span class="tag">现在先别碰</span>
+<p>Paimon 源码、复杂 Flink 作业、LSM 底层细节、四种表格式的深度选型对比——这些现在学性价比太低，等地基打好再说。</p>
+</div>
+
+<h2>本周最小目标</h2>
+<ol class="steps">
+<li>学会基础 SQL 查询（select / where / group by / join）。</li>
+<li>理解「表、主键、分区、ETL」这几个词。</li>
+<li>知道 Spark、Flink、CDC 分别是干什么的。</li>
+</ol>
+<p>完成这三件事，再看 Paimon，就不会完全懵。下一章我们就从预备知识开始。</p>
+
+<div class="pager"><a class="prev" href="../index.html"><span class="dir">← 上一页</span><span class="pttl">首页 · 学习总览</span></a><a class="next" href="01-prerequisites.html"><span class="dir">下一页 →</span><span class="pttl">预备知识</span></a></div>
+</div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="../assets/main.js"></script>
+</body>
+</html>

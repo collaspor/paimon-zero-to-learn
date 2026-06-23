@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>对标对比 · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文学习教程：预备知识、核心概念、Quick Start 与对标对比。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="../index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="../index.html"><span class="idx">•</span>首页 · 学习总览</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+<a href="01-prerequisites.html"><span class="idx">1</span>预备知识</a>
+<a href="02-stream-batch.html"><span class="idx">2</span>计算基础</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="03-what-is-paimon.html"><span class="idx">3</span>Paimon 是什么</a>
+<a href="04-concepts.html"><span class="idx">4</span>核心概念</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">拓展</div><nav class="nav">
+<a href="05-quickstart.html"><span class="idx">5</span>Quick Start 上手</a>
+<a href="06-comparison.html"><span class="idx">6</span>对标对比</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">第 6 章 · 拓展</span>
+<h1>对标对比</h1>
+<p class="lead">Paimon 最常和 Iceberg、Hudi、Delta Lake 放在一起比较。这一章帮你按场景看清差别。</p>
+
+<div class="callout warn">
+<span class="tag">视角说明</span>
+<p>下面的对比综合了官方定位与<strong>社区 / 市场视角</strong>，并非任何一家的官方结论。技术选型请结合自己团队的实际栈再判断。</p>
+</div>
+
+<h2>四种开源表格式速览</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>格式</th><th>出身</th><th>主要设计目标</th></tr></thead>
+<tbody>
+<tr><td><strong>Apache Iceberg</strong></td><td>Netflix（2017）</td><td>多引擎互操作、开放标准</td></tr>
+<tr><td><strong>Delta Lake</strong></td><td>Databricks（2019）</td><td>Spark 上可靠的数据湖</td></tr>
+<tr><td><strong>Apache Hudi</strong></td><td>Uber（2016）</td><td>流式 upsert 与增量处理</td></tr>
+<tr><td><strong>Apache Paimon</strong></td><td>Alibaba/Flink（2022）</td><td>实时湖仓（LSM 结构）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>关键维度对比</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>维度</th><th>Iceberg</th><th>Delta Lake</th><th>Hudi</th><th>Paimon</th></tr></thead>
+<tbody>
+<tr><td>多引擎支持</td><td>最广</td><td>Spark 最佳</td><td>Spark+Flink 强</td><td>Flink 原生最强</td></tr>
+<tr><td>流式 / 实时</td><td>较好（靠 Flink）</td><td>CDC（CDF）</td><td>原生强</td><td>原生强</td></tr>
+<tr><td>主键 upsert</td><td>支持</td><td>支持（merge）</td><td>原生（索引）</td><td>LSM 原生</td></tr>
+<tr><td>开放生态 / 标准</td><td>最成熟</td><td>偏 Databricks</td><td>中等</td><td>成长中</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>按场景选型</h2>
+<div class="cards">
+<div class="card"><div class="ttl">重 Flink 实时链路</div><div class="desc">CDC 入湖、实时更新、流式查询 → 优先看 <strong>Paimon</strong>。</div></div>
+<div class="card"><div class="ttl">重跨引擎开放生态</div><div class="desc">想要最大互操作性、云厂商支持广 → 优先看 <strong>Iceberg</strong>。</div></div>
+<div class="card"><div class="ttl">重 Spark / Databricks</div><div class="desc">团队栈以 Databricks 为主 → 优先看 <strong>Delta Lake</strong>。</div></div>
+<div class="card"><div class="ttl">传统流式 upsert</div><div class="desc">老牌强项、已有经验 → 也常比较 <strong>Hudi</strong>。</div></div>
+</div>
+
+<h2>一句话记忆</h2>
+<ul>
+<li><strong>Paimon：</strong>Flink-native、实时更新、CDC、主键表。</li>
+<li><strong>Iceberg：</strong>开放标准、多引擎、生态最广。</li>
+<li><strong>Hudi：</strong>流式 upsert 的老牌强项。</li>
+<li><strong>Delta Lake：</strong>Databricks / Spark 体系强。</li>
+</ul>
+
+<div class="callout note">
+<span class="tag">给零基础的建议</span>
+<p>如果你做实时数仓 / Flink，Paimon 很值得学；如果做传统离线数仓，可以先学 Iceberg 再补 Paimon；团队是 Databricks/Spark 主导，则同时关注 Delta Lake。</p>
+</div>
+
+<div class="pager"><a class="prev" href="05-quickstart.html"><span class="dir">← 上一页</span><span class="pttl">Quick Start 上手</span></a><a class="next" href="07-resources.html"><span class="dir">下一页 →</span><span class="pttl">学习资源汇总</span></a></div>
+</div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="../assets/main.js"></script>
+</body>
+</html>

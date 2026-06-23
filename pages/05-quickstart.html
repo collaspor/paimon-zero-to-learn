@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Start 上手 · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文学习教程：预备知识、核心概念、Quick Start 与对标对比。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="../index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="../index.html"><span class="idx">•</span>首页 · 学习总览</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+<a href="01-prerequisites.html"><span class="idx">1</span>预备知识</a>
+<a href="02-stream-batch.html"><span class="idx">2</span>计算基础</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="03-what-is-paimon.html"><span class="idx">3</span>Paimon 是什么</a>
+<a href="04-concepts.html"><span class="idx">4</span>核心概念</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">拓展</div><nav class="nav">
+<a href="05-quickstart.html"><span class="idx">5</span>Quick Start 上手</a>
+<a href="06-comparison.html"><span class="idx">6</span>对标对比</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">第 5 章 · 学 Paimon</span>
+<h1>Quick Start 上手</h1>
+<p class="lead">跟着官方思路，用 Flink SQL 跑一个最小示例：建 catalog、建表、流式写入、批查、流查。</p>
+
+<div class="callout warn">
+<span class="tag">前置说明</span>
+<p>这一章涉及实际环境，零基础同学第一次看可以先「读懂流程」，等装好 Flink 再动手。版本和 jar 以<a href="https://paimon.apache.org/docs/master/flink/quick-start" target="_blank" rel="noopener">官方 Quick Start</a> 为准。</p>
+</div>
+
+<h2>步骤总览</h2>
+<ol class="steps">
+<li>下载 Flink 并解压。</li>
+<li>把 Paimon 的 bundled jar 拷到 Flink 的 <code>lib/</code> 目录。</li>
+<li>（在 Hadoop 环境外）准备好 Hadoop 依赖。</li>
+<li>启动 Flink 本地集群，打开 SQL Client。</li>
+<li>建 catalog 和表 → 写入 → 查询。</li>
+</ol>
+
+<h2>1. 准备 Flink 与 Paimon</h2>
+<div class="codeblock"><div class="bar"><span>解压 Flink 并放入 Paimon jar</span><button class="copy-btn">复制</button></div><pre><code class="language-bash"># 解压 Flink
+tar -xzf flink-*.tgz
+
+# 把 Paimon bundled jar 拷到 Flink 的 lib 目录
+cp paimon-flink-*.jar &lt;FLINK_HOME&gt;/lib/
+
+# 启动本地集群并打开 SQL Client
+&lt;FLINK_HOME&gt;/bin/start-cluster.sh
+&lt;FLINK_HOME&gt;/bin/sql-client.sh</code></pre></div>
+<p>启动后可访问 <code>localhost:8081</code> 查看 Flink Dashboard。</p>
+
+<h2>2. 创建 Catalog 和表</h2>
+<div class="codeblock"><div class="bar"><span>建 catalog 与主键表</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 创建一个 Paimon catalog，数据存在本地目录
+CREATE CATALOG my_catalog WITH (
+    &#x27;type&#x27; = &#x27;paimon&#x27;,
+    &#x27;warehouse&#x27; = &#x27;file:/tmp/paimon&#x27;
+);
+
+USE CATALOG my_catalog;
+
+-- 建一张 word_count 表，word 是主键
+CREATE TABLE word_count (
+    word STRING PRIMARY KEY NOT ENFORCED,
+    cnt BIGINT
+);</code></pre></div>
+
+<h2>3. 流式写入数据</h2>
+<div class="codeblock"><div class="bar"><span>用数据生成器持续写入</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 造一个不断产生单词的数据源
+CREATE TEMPORARY TABLE word_table (
+    word STRING
+) WITH (
+    &#x27;connector&#x27; = &#x27;datagen&#x27;,
+    &#x27;fields.word.length&#x27; = &#x27;1&#x27;
+);
+
+-- 流模式下 Paimon 需要 checkpoint
+SET &#x27;execution.checkpointing.interval&#x27; = &#x27;10 s&#x27;;
+
+-- 持续把单词计数写进 word_count
+INSERT INTO word_count SELECT word, COUNT(*) FROM word_table GROUP BY word;</code></pre></div>
+
+<h2>4. 批量查询（OLAP）</h2>
+<div class="codeblock"><div class="bar"><span>切到批模式查询当前结果</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;sql-client.execution.result-mode&#x27; = &#x27;tableau&#x27;;
+
+-- 切换到批模式
+RESET &#x27;execution.checkpointing.interval&#x27;;
+SET &#x27;execution.runtime-mode&#x27; = &#x27;batch&#x27;;
+
+-- 查询当前 word_count（可多次执行，观察变化）
+SELECT * FROM word_count;</code></pre></div>
+
+<h2>5. 流式查询</h2>
+<div class="codeblock"><div class="bar"><span>切到流模式持续观察变化</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;streaming&#x27;;
+
+-- 持续跟踪表的变化
+SELECT `interval`, COUNT(*) AS interval_cnt FROM
+    (SELECT cnt / 10000 AS `interval` FROM word_count) GROUP BY `interval`;</code></pre></div>
+
+<div class="callout tip">
+<span class="tag">你刚刚做了什么</span>
+<p>同一张 <code>word_count</code> 表，既能<strong>流式写入</strong>，又能<strong>批量查</strong>当前快照、还能<strong>流式查</strong>变化——这就是「流批一体」的直观体验，也是 Paimon 最核心的卖点。</p>
+</div>
+
+<h2>收尾</h2>
+<div class="codeblock"><div class="bar"><span>停止集群</span><button class="copy-btn">复制</button></div><pre><code class="language-bash"># 在 localhost:8081 取消流作业后，停止本地集群
+&lt;FLINK_HOME&gt;/bin/stop-cluster.sh</code></pre></div>
+<p>跑通这个示例，你就完成了从 0 到「亲手用过 Paimon」的关键一步。下一章看它和其他表格式怎么比。</p>
+
+<div class="pager"><a class="prev" href="04-concepts.html"><span class="dir">← 上一页</span><span class="pttl">核心概念</span></a><a class="next" href="06-comparison.html"><span class="dir">下一页 →</span><span class="pttl">对标对比</span></a></div>
+</div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="../assets/main.js"></script>
+</body>
+</html>

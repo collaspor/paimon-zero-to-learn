@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>首页 · 学习总览 · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文学习教程：预备知识、核心概念、Quick Start 与对标对比。">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="index.html"><span class="idx">•</span>首页 · 学习总览</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="pages/00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+<a href="pages/01-prerequisites.html"><span class="idx">1</span>预备知识</a>
+<a href="pages/02-stream-batch.html"><span class="idx">2</span>计算基础</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="pages/03-what-is-paimon.html"><span class="idx">3</span>Paimon 是什么</a>
+<a href="pages/04-concepts.html"><span class="idx">4</span>核心概念</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">拓展</div><nav class="nav">
+<a href="pages/05-quickstart.html"><span class="idx">5</span>Quick Start 上手</a>
+<a href="pages/06-comparison.html"><span class="idx">6</span>对标对比</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">零基础 · 中文教程</span>
+<h1>从 0 学习 Apache Paimon</h1>
+<p class="lead">即使你完全没有大数据基础，也能跟着这条路线，一步步理解 Paimon 是什么、为什么有用，以及怎么动手上手。</p>
+
+<div class="callout note">
+<span class="tag">先说结论</span>
+<p>Apache Paimon 是一个面向<strong>实时湖仓（Realtime Lakehouse）</strong>的开源<strong>数据湖表格式</strong>。它让<strong>流处理 + 批处理 + 数据湖存储</strong>更统一，尤其擅长<strong>主键更新、CDC 入湖、近实时查询</strong>。</p>
+</div>
+
+<h2>这个网站适合谁</h2>
+<div class="taglist">
+<span>大数据零基础</span><span>想转数据 / 数仓方向</span><span>做实时数仓 / Flink</span><span>想搞懂 Paimon vs Iceberg/Hudi/Delta</span>
+</div>
+<p>如果你看到 <code>snapshot</code>、<code>LSM</code>、<code>CDC</code> 这些词会发懵，别担心——这正是本教程要解决的问题。我们先打地基，再学 Paimon。</p>
+
+<h2>学习路线（建议顺序）</h2>
+<p>不要一上来就啃 Paimon 原理。先按下面四层补地基，再进入 Paimon 本体，会顺很多。</p>
+<div class="cards">
+<a class="card" href="pages/00-roadmap.html"><span class="num">第 0 章</span><div class="ttl">零基础学习路线</div><div class="desc">四层地基 → Paimon，告诉你先学什么、后学什么、各花多久。</div></a>
+<a class="card" href="pages/01-prerequisites.html"><span class="num">第 1 章</span><div class="ttl">预备知识</div><div class="desc">Linux 基本命令、SQL 基础、表/主键/分区/ETL/数仓概念。</div></a>
+<a class="card" href="pages/02-stream-batch.html"><span class="num">第 2 章</span><div class="ttl">计算基础</div><div class="desc">批处理 vs 流处理、Spark/Flink 定位、CDC 是什么。</div></a>
+<a class="card" href="pages/03-what-is-paimon.html"><span class="num">第 3 章</span><div class="ttl">Paimon 是什么</div><div class="desc">用大白话讲定位、核心特性和典型使用场景。</div></a>
+<a class="card" href="pages/04-concepts.html"><span class="num">第 4 章</span><div class="ttl">核心概念</div><div class="desc">snapshot、manifest、LSM、compaction、time travel 等术语。</div></a>
+<a class="card" href="pages/05-quickstart.html"><span class="num">第 5 章</span><div class="ttl">Quick Start 上手</div><div class="desc">用 Flink SQL 建表、写入、批查、流查，跑通最小示例。</div></a>
+<a class="card" href="pages/06-comparison.html"><span class="num">第 6 章</span><div class="ttl">对标对比</div><div class="desc">Paimon vs Iceberg / Hudi / Delta Lake，按场景选型。</div></a>
+<a class="card" href="pages/07-resources.html"><span class="num">第 7 章</span><div class="ttl">学习资源汇总</div><div class="desc">官网、文档、仓库、实践文章，按学习阶段分组。</div></a>
+</div>
+
+<div class="callout tip">
+<span class="tag">怎么用这个网站</span>
+<p>从左侧导航第 0 章开始，按顺序往下读。每页底部都有「下一页」，跟着走就行。已经有基础的同学，可以直接跳到第 3 章。</p>
+</div>
+
+<div class="pager"><a class="disabled"></a><a class="next" href="pages/00-roadmap.html"><span class="dir">下一页 →</span><span class="pttl">零基础学习路线</span></a></div>
+</div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>
