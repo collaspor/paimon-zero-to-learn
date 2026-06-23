@@ -8,7 +8,7 @@
 
 https://collaspor.github.io/paimon-zero-to-learn/
 
-## 内容结构（首页 + 14 章，五个阶段）
+## 内容结构（首页 + 20 章，七个阶段）
 
 | 阶段 | 章节 | 页面 | 内容 |
 |------|------|------|------|
@@ -25,7 +25,13 @@ https://collaspor.github.io/paimon-zero-to-learn/
 | 动手实践 | 第 10 章 | `pages/10-advanced.html` | 进阶：表类型、merge engine、bucket、compaction 调优 |
 | 进阶·拓展 | 第 11 章 | `pages/11-comparison.html` | 对标对比：Iceberg / Hudi / Delta Lake 与选型 |
 | 进阶·拓展 | 第 12 章 | `pages/12-faq.html` | 常见问题与排错（环境/写入/查询/存储） |
-| 进阶·拓展 | 第 13 章 | `pages/13-resources.html` | 术语速查、官方资料导读、继续提升的方向 |
+| 生态与引擎 | 第 14 章 | `pages/14-ecosystem.html` | 生态全景：存储格式/计算引擎/OLAP/平台的分工 |
+| 生态与引擎 | 第 15 章 | `pages/15-flink.html` | Flink + Paimon：批写/流写、流式读取、时间旅行 |
+| 生态与引擎 | 第 16 章 | `pages/16-spark.html` | Spark + Paimon：批处理读写、时间旅行、维护操作 |
+| 生态与引擎 | 第 17 章 | `pages/17-hive.html` | Hive + Paimon：Hive Metastore 对接存量数仓 |
+| 生态与引擎 | 第 18 章 | `pages/18-starrocks.html` | StarRocks + Paimon：外部 catalog 直查、极速 OLAP |
+| 生态与引擎 | 第 19 章 | `pages/19-iceberg-wedata.html` | Paimon vs Iceberg 选型 + 腾讯云 WeData 平台 |
+| 收尾 | 第 13 章 | `pages/13-resources.html` | 术语速查、官方资料导读、继续提升的方向 |
 
 ## 站点特性
 

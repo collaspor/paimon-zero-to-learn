@@ -37,11 +37,21 @@
 <a href="07-env-setup.html"><span class="idx">7</span>环境搭建</a>
 <a href="08-quickstart.html"><span class="idx">8</span>Quick Start 上手</a>
 <a href="09-cdc-practice.html"><span class="idx">9</span>实战：CDC 入湖</a>
+<a href="10-advanced.html"><span class="idx">10</span>进阶：表类型与调优</a>
 </nav></div>
 <div class="nav-group"><div class="nav-group-title">进阶 · 拓展</div><nav class="nav">
-<a href="10-advanced.html"><span class="idx">10</span>进阶：表类型与调优</a>
 <a href="11-comparison.html"><span class="idx">11</span>对标对比与选型</a>
 <a href="12-faq.html"><span class="idx">12</span>常见问题与排错</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">生态与引擎</div><nav class="nav">
+<a href="14-ecosystem.html"><span class="idx">14</span>生态全景</a>
+<a href="15-flink.html"><span class="idx">15</span>Flink + Paimon</a>
+<a href="16-spark.html"><span class="idx">16</span>Spark + Paimon</a>
+<a href="17-hive.html"><span class="idx">17</span>Hive + Paimon</a>
+<a href="18-starrocks.html"><span class="idx">18</span>StarRocks 极速查询</a>
+<a href="19-iceberg-wedata.html"><span class="idx">19</span>Iceberg 对比 & WeData</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">收尾</div><nav class="nav">
 <a href="13-resources.html"><span class="idx">13</span>学习资源与下一步</a>
 </nav></div>
 </aside>
@@ -72,6 +82,8 @@
 <div class="node"><div class="nt">CDC 与湖仓</div><div class="nd">变更捕获 / 表格式由来</div></div>
 <div class="arrow">↓</div>
 <div class="node brand"><div class="nt">Apache Paimon</div><div class="nd">概念 → 上手 → 实战 → 调优</div></div>
+<div class="arrow">↓</div>
+<div class="node"><div class="nt">生态与引擎</div><div class="nd">Flink / Spark / Hive / StarRocks / Iceberg / WeData</div></div>
 </div>
 
 <h2>建议时间安排</h2>
@@ -83,14 +95,16 @@
 <tr><td>第二阶段</td><td>第 3–4 章</td><td>批/流区别 + Spark/Flink + CDC + 湖仓</td><td>约 1–2 周</td><td>能说清流批差异、CDC 与湖仓是什么</td></tr>
 <tr><td>第三阶段</td><td>第 5–8 章</td><td>Paimon 概念 + 环境搭建 + Quick Start</td><td>约 1 周</td><td>能跑通最小示例、理解核心特性</td></tr>
 <tr><td>第四阶段</td><td>第 9–10 章</td><td>CDC 入湖实战 + 表类型与调优</td><td>约 1 周</td><td>能搭一条实时入湖链路</td></tr>
-<tr><td>第五阶段</td><td>第 11–13 章</td><td>选型对比 + 排错 + 继续提升</td><td>按需</td><td>能回答「为什么选 Paimon」</td></tr>
+<tr><td>第五阶段</td><td>第 11–12 章</td><td>选型对比 + 排错</td><td>按需</td><td>能回答「为什么选 Paimon」</td></tr>
+<tr><td>第六阶段</td><td>第 14–19 章</td><td>Flink/Spark/Hive/StarRocks 集成 + Iceberg 选型 + WeData</td><td>约 1–2 周</td><td>能搭「源→Flink→Paimon→StarRocks」链路、会做选型</td></tr>
+<tr><td>收尾</td><td>第 13 章</td><td>资源导读 + 继续提升</td><td>按需</td><td>知道去哪深入</td></tr>
 </tbody>
 </table>
 </div>
 
 <h2>三种读法</h2>
 <div class="cards">
-<div class="card"><div class="ttl">完全零基础</div><div class="desc">从第 0 章一路读到第 13 章，别跳。每章练习都做一遍。</div></div>
+<div class="card"><div class="ttl">完全零基础</div><div class="desc">从第 0 章一路读到第 19 章，别跳。每章练习都做一遍。</div></div>
 <div class="card"><div class="ttl">有 SQL/Linux 基础</div><div class="desc">快速扫第 1–2 章，从第 3 章开始认真读。</div></div>
 <div class="card"><div class="ttl">懂大数据，只想学 Paimon</div><div class="desc">直接从第 5 章开始，配合第 6–10 章动手。</div></div>
 </div>

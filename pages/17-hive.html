@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hive + Paimon · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文完整自学教程：Linux、SQL、大数据、CDC、湖仓、Paimon 核心概念、环境搭建、Quick Start、实战与排错。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="progress-bar" id="progress"></div>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="../index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门 · 完整自学</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="../index.html"><span class="idx">•</span>首页 · 学习总览</a>
+<a href="00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="01-linux.html"><span class="idx">1</span>Linux 与终端</a>
+<a href="02-sql.html"><span class="idx">2</span>SQL 与数据建模</a>
+<a href="03-bigdata.html"><span class="idx">3</span>大数据与计算引擎</a>
+<a href="04-cdc-lakehouse.html"><span class="idx">4</span>CDC 与湖仓</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="05-what-is-paimon.html"><span class="idx">5</span>Paimon 是什么</a>
+<a href="06-concepts.html"><span class="idx">6</span>核心概念与原理</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">动手实践</div><nav class="nav">
+<a href="07-env-setup.html"><span class="idx">7</span>环境搭建</a>
+<a href="08-quickstart.html"><span class="idx">8</span>Quick Start 上手</a>
+<a href="09-cdc-practice.html"><span class="idx">9</span>实战：CDC 入湖</a>
+<a href="10-advanced.html"><span class="idx">10</span>进阶：表类型与调优</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">进阶 · 拓展</div><nav class="nav">
+<a href="11-comparison.html"><span class="idx">11</span>对标对比与选型</a>
+<a href="12-faq.html"><span class="idx">12</span>常见问题与排错</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">生态与引擎</div><nav class="nav">
+<a href="14-ecosystem.html"><span class="idx">14</span>生态全景</a>
+<a href="15-flink.html"><span class="idx">15</span>Flink + Paimon</a>
+<a href="16-spark.html"><span class="idx">16</span>Spark + Paimon</a>
+<a href="17-hive.html"><span class="idx">17</span>Hive + Paimon</a>
+<a href="18-starrocks.html"><span class="idx">18</span>StarRocks 极速查询</a>
+<a href="19-iceberg-wedata.html"><span class="idx">19</span>Iceberg 对比 & WeData</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">收尾</div><nav class="nav">
+<a href="13-resources.html"><span class="idx">13</span>学习资源与下一步</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">第 17 章 · 生态与引擎</span>
+<h1>Hive + Paimon：对接存量数仓</h1>
+<p class="lead">很多公司有大量存量的 Hive 数仓和 Hive Metastore（HMS）。Paimon 可以把表注册进 Hive Metastore，让 Hive、以及所有「认 HMS」的引擎都能查到这些表，平滑融入既有体系。</p>
+
+<h2>两件事别混淆</h2>
+<div class="term"><div class="word">Hive Metastore（HMS）<span class="en">Hive 元数据服务</span></div><p>一个集中存放「库、表、字段、分区」等元数据的服务。它本身不算数，只记录「有哪些表、表在哪、什么结构」。很多引擎（Hive/Spark/Flink/Trino）都靠它来发现表。</p></div><div class="term"><div class="word">Hive Catalog（Paimon 的）<span class="en">Hive 目录</span></div><p>Paimon 的一种 catalog 类型，把 Paimon 表的元数据登记到 HMS。这样不需要单独维护 Paimon 的元数据，存量体系就能发现这些表。</p></div>
+
+<h2>1. 用 Hive Metastore 作为 Paimon Catalog</h2>
+<p>在 Flink（或 Spark）里建 catalog 时，指定 <code>metastore=hive</code>，Paimon 就会把表登记到 HMS：</p>
+<div class="codeblock"><div class="bar"><span>Flink SQL：基于 HMS 的 Paimon catalog</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">CREATE CATALOG paimon_hive WITH (
+    &#x27;type&#x27; = &#x27;paimon&#x27;,
+    &#x27;metastore&#x27; = &#x27;hive&#x27;,
+    &#x27;uri&#x27; = &#x27;thrift://localhost:9083&#x27;,     -- Hive Metastore 地址
+    &#x27;warehouse&#x27; = &#x27;hdfs:///warehouse/paimon&#x27;
+);
+USE CATALOG paimon_hive;
+
+CREATE TABLE user_log (
+    id   BIGINT PRIMARY KEY NOT ENFORCED,
+    name STRING
+);</code></pre></div>
+<p>建完后，这张 <code>user_log</code> 不仅是 Paimon 表，元数据也进了 HMS——Hive 端能「看见」它。</p>
+
+<h2>2. 在 Hive 里查询 Paimon 表</h2>
+<p>Hive 端需要加载 Paimon 的 Hive 连接 jar，然后就能像查普通表一样查：</p>
+<div class="codeblock"><div class="bar"><span>Hive CLI / Beeline</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">-- 加载 Paimon 的 Hive connector（路径换成你的 jar）
+ADD JAR /opt/paimon/paimon-hive-connector.jar;
+
+-- 直接查询上一步建的表
+SELECT * FROM user_log LIMIT 10;</code></pre></div>
+<div class="callout warn">
+<span class="tag">版本与 jar</span>
+<p>Hive 集成对版本较敏感：要用与你的 Hive 版本匹配的 paimon-hive-connector jar，并确保 HMS 可访问。版本不匹配会出现找不到 SerDe / InputFormat 之类的错误。</p>
+</div>
+
+<h2>3. 这样做的价值</h2>
+<div class="flow">
+<div class="node brand"><div class="nt">Paimon 表</div><div class="nd">登记到 HMS</div></div>
+<div class="arrow">↓ 共享同一份元数据</div>
+<div class="node"><div class="nt">Hive · Spark · Trino · StarRocks</div><div class="nd">都能发现并查询同一张表</div></div>
+</div>
+<p>对存量数仓团队来说，意义是：<strong>不用推倒重来</strong>。新建的实时表用 Paimon，登记进熟悉的 HMS，老的查询工具链照样能用，迁移成本最低。</p>
+
+<div class="exercise"><div class="ex-h">练习 17-1</div><div><p>用一句话解释：为什么把 Paimon 表登记到 Hive Metastore，能让「不是 Hive 的引擎」（比如 Spark、StarRocks）也查到这张表？</p></div><details class="answer"><summary>查看参考答案</summary><p>因为 Spark、StarRocks 等引擎也支持把 Hive Metastore 作为元数据来源。HMS 是一个被广泛共享的「表目录」，只要表登记在里面，所有认 HMS 的引擎都能发现并查询它，而不只是 Hive 自己。</p></details></div>
+
+<div class="callout tip">
+<span class="tag">本章目标</span>
+<p>理解 Hive Metastore 的角色，会用 <code>metastore=hive</code> 把 Paimon 表登记进 HMS，并在 Hive 端查询，明白这对融合存量数仓的价值。下一章上 StarRocks，体验对 Paimon 的极速查询。</p>
+</div>
+
+<div class="pager"><a class="prev" href="16-spark.html"><span class="dir">← 上一页</span><span class="pttl">Spark + Paimon</span></a><a class="next" href="18-starrocks.html"><span class="dir">下一页 →</span><span class="pttl">StarRocks 极速查询</span></a></div>
+</div></main>
+<nav class="toc" id="toc"></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="../assets/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iceberg 对比 & WeData · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文完整自学教程：Linux、SQL、大数据、CDC、湖仓、Paimon 核心概念、环境搭建、Quick Start、实战与排错。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="progress-bar" id="progress"></div>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="../index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门 · 完整自学</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="../index.html"><span class="idx">•</span>首页 · 学习总览</a>
+<a href="00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="01-linux.html"><span class="idx">1</span>Linux 与终端</a>
+<a href="02-sql.html"><span class="idx">2</span>SQL 与数据建模</a>
+<a href="03-bigdata.html"><span class="idx">3</span>大数据与计算引擎</a>
+<a href="04-cdc-lakehouse.html"><span class="idx">4</span>CDC 与湖仓</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="05-what-is-paimon.html"><span class="idx">5</span>Paimon 是什么</a>
+<a href="06-concepts.html"><span class="idx">6</span>核心概念与原理</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">动手实践</div><nav class="nav">
+<a href="07-env-setup.html"><span class="idx">7</span>环境搭建</a>
+<a href="08-quickstart.html"><span class="idx">8</span>Quick Start 上手</a>
+<a href="09-cdc-practice.html"><span class="idx">9</span>实战：CDC 入湖</a>
+<a href="10-advanced.html"><span class="idx">10</span>进阶：表类型与调优</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">进阶 · 拓展</div><nav class="nav">
+<a href="11-comparison.html"><span class="idx">11</span>对标对比与选型</a>
+<a href="12-faq.html"><span class="idx">12</span>常见问题与排错</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">生态与引擎</div><nav class="nav">
+<a href="14-ecosystem.html"><span class="idx">14</span>生态全景</a>
+<a href="15-flink.html"><span class="idx">15</span>Flink + Paimon</a>
+<a href="16-spark.html"><span class="idx">16</span>Spark + Paimon</a>
+<a href="17-hive.html"><span class="idx">17</span>Hive + Paimon</a>
+<a href="18-starrocks.html"><span class="idx">18</span>StarRocks 极速查询</a>
+<a href="19-iceberg-wedata.html"><span class="idx">19</span>Iceberg 对比 & WeData</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">收尾</div><nav class="nav">
+<a href="13-resources.html"><span class="idx">13</span>学习资源与下一步</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">第 19 章 · 生态与引擎</span>
+<h1>Iceberg 对比 &amp; WeData 平台</h1>
+<p class="lead">这一章做两件事：① 把 Paimon 和它最常被拿来比较的竞品 <strong>Apache Iceberg</strong> 讲清楚，帮你做选型；② 认识 <strong>WeData</strong>——腾讯云上把这一整套湖仓栈托管起来的数据开发平台。</p>
+
+<h2>一、Paimon vs Iceberg：同层竞品</h2>
+<p>回顾第 14 章：Iceberg 和 Paimon 一样，都是「湖表格式」，是<strong>二选一</strong>的关系（不是协作）。它们都能让你在数据湖上拥有「像数据库表一样」的能力：ACID、schema 演进、时间旅行。区别在侧重点。</p>
+<div class="term"><div class="word">Apache Iceberg<span class="en">冰山</span></div><p>由 Netflix 发起、现为 Apache 顶级项目的开放表格式。生态成熟、被各大引擎和云厂商广泛支持，尤其擅长大规模「批分析」和缓慢变化的大表。</p></div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>维度</th><th>Apache Paimon</th><th>Apache Iceberg</th></tr></thead>
+<tbody>
+<tr><td>底层结构</td><td>LSM 树</td><td>基于不可变数据文件 + 清单（manifest）</td></tr>
+<tr><td>最擅长</td><td><strong>实时更新 / CDC 入湖 / 主键 upsert</strong></td><td><strong>大规模批分析、缓慢变化大表</strong></td></tr>
+<tr><td>流式能力</td><td>原生强（前身即 Flink Table Store）</td><td>有，但实时更新不是强项</td></tr>
+<tr><td>主键 upsert</td><td>一等公民，开箱即用</td><td>有 MOR，但更偏批式合并</td></tr>
+<tr><td>生态成熟度</td><td>较新，增长快</td><td>非常成熟，引擎/云厂商支持广</td></tr>
+<tr><td>典型选择</td><td>实时数仓、需要频繁更新</td><td>离线数仓、海量历史、以读为主</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout key">
+<span class="tag">一句话选型</span>
+<p>数据<strong>频繁变更、要实时、要主键 upsert（如 CDC 入湖）→ 选 Paimon</strong>；以<strong>海量历史、批量分析、更新少 → Iceberg 很成熟稳妥</strong>。很多团队也会两者并存，按场景分别使用。</p>
+</div>
+
+<h2>二、WeData：腾讯云的数据开发平台</h2>
+<p>前面所有动手都是你自己装 Flink、配 jar、起集群——这在学习阶段很有价值（你理解了每一层）。但到了生产，自己运维这一整套很重。<strong>WeData</strong> 就是把它们托管起来的云平台。</p>
+<div class="term"><div class="word">WeData<span class="en">腾讯云数据开发治理平台</span></div><p>腾讯云提供的一站式大数据开发平台，整合数据集成、开发（SQL/任务编排）、调度、治理、运维等能力，底层可对接 Flink、Spark、湖格式（含 Paimon/Iceberg）等，让团队不必自己搭运维这套栈。</p></div>
+
+<h3>它帮你省掉什么</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>你在前面章节手动做的</th><th>WeData 上的形态</th></tr></thead>
+<tbody>
+<tr><td>装 Flink、放 jar、起集群</td><td>平台托管的计算资源，开箱即用</td></tr>
+<tr><td>手写 CDC 同步命令</td><td>可视化配置数据集成任务</td></tr>
+<tr><td>命令行提交、自己盯作业</td><td>任务编排 + 调度 + 监控告警</td></tr>
+<tr><td>自己管元数据、权限</td><td>统一的元数据管理与数据治理</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout note">
+<span class="tag">学习顺序建议</span>
+<p>先用前面的章节<strong>把原理和手动流程跑通</strong>（理解发生了什么），再上 WeData 这类平台<strong>提效</strong>。反过来「只会点平台、不懂底层」，遇到问题会很难排查。你现在已经具备了看懂平台背后在做什么的能力。</p>
+</div>
+
+<h3>在 WeData 上用 Paimon 的大致流程</h3>
+<div class="flow">
+<div class="node"><div class="nt">① 接入数据源</div><div class="nd">在数据集成里配置 MySQL/Kafka 等</div></div>
+<div class="arrow">↓</div>
+<div class="node brand"><div class="nt">② 实时写入 Paimon</div><div class="nd">用托管 Flink，配置 CDC 同步到 Paimon 表</div></div>
+<div class="arrow">↓</div>
+<div class="node"><div class="nt">③ 开发与调度</div><div class="nd">写 SQL 任务做加工，配置周期调度</div></div>
+<div class="arrow">↓</div>
+<div class="node"><div class="nt">④ 查询与服务</div><div class="nd">对接 StarRocks 等对外提供查询</div></div>
+</div>
+<p class="muted">具体菜单和名称以腾讯云 WeData 控制台最新版本为准；这里给的是「概念流程」，对应的正是你前面亲手做过的每一步。</p>
+
+<div class="exercise"><div class="ex-h">练习 19-1</div><div><p>两道选型题：① 业务要把 MySQL 订单实时入湖、且要随时反映增删改，选 Paimon 还是 Iceberg？② 团队不想自己运维 Flink 集群、希望可视化配置实时同步任务，应该考虑什么？</p></div><details class="answer"><summary>查看参考答案</summary><p>① 选 Paimon——实时 + 主键 upsert 是它的强项。② 考虑用 WeData 这类托管数据开发平台，用托管计算资源 + 可视化数据集成替代自建运维。</p></details></div>
+
+<div class="callout tip">
+<span class="tag">恭喜你学完生态篇</span>
+<p>到这里，你不仅会用 Paimon，还理解了它与 Flink、Spark、Hive、StarRocks、Iceberg、WeData 的关系与协作方式，具备了在真实项目里做技术选型和搭建链路的基础。回首页可重温整张学习地图，或去「学习资源与下一步」继续深入。</p>
+</div>
+
+<div class="pager"><a class="prev" href="18-starrocks.html"><span class="dir">← 上一页</span><span class="pttl">StarRocks 极速查询</span></a><a class="next" href="13-resources.html"><span class="dir">下一页 →</span><span class="pttl">学习资源与下一步</span></a></div>
+</div></main>
+<nav class="toc" id="toc"></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="../assets/main.js"></script>
+</body>
+</html>

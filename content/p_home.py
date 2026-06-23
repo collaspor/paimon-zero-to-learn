@@ -29,7 +29,7 @@ def build(code, term, exercise):
 </div>
 
 <h2>完整学习地图</h2>
-<p>本教程分五个阶段、14 章。建议从第 0 章开始按顺序读；已有基础的同学可直接跳到第 5 章。</p>
+<p>本教程分七个阶段、20 章。建议从第 0 章开始按顺序读；已有基础的同学可直接跳到第 5 章。学完核心后，「生态与引擎」阶段会带你打通 Flink、Spark、Hive、StarRocks、Iceberg、WeData 等周边组件。</p>
 
 <h3>① 开始</h3>
 <div class="cards">
@@ -62,6 +62,21 @@ def build(code, term, exercise):
 <div class="cards">
 <a class="card" href="pages/11-comparison.html"><span class="num">第 11 章</span><div class="ttl">对标对比与选型</div><div class="desc">Paimon vs Iceberg / Hudi / Delta Lake，按场景选型。</div></a>
 <a class="card" href="pages/12-faq.html"><span class="num">第 12 章</span><div class="ttl">常见问题与排错</div><div class="desc">环境、写入、查询、小文件等高频问题与解决办法。</div></a>
+</div>
+
+<h3>⑥ 生态与引擎</h3>
+<p>Paimon 从不孤军奋战。这一阶段带你打通它与各大计算/查询引擎和云平台的协作，理解「谁负责存、谁负责算、谁负责查」。</p>
+<div class="cards">
+<a class="card" href="pages/14-ecosystem.html"><span class="num">第 14 章</span><div class="ttl">生态全景</div><div class="desc">一张图讲清存储格式 / 计算引擎 / OLAP / 平台的分工。</div></a>
+<a class="card" href="pages/15-flink.html"><span class="num">第 15 章</span><div class="ttl">Flink + Paimon</div><div class="desc">最佳拍档：批写/流写、流式读取、时间旅行。</div></a>
+<a class="card" href="pages/16-spark.html"><span class="num">第 16 章</span><div class="ttl">Spark + Paimon</div><div class="desc">批处理读写、时间旅行、Spark 端维护操作。</div></a>
+<a class="card" href="pages/17-hive.html"><span class="num">第 17 章</span><div class="ttl">Hive + Paimon</div><div class="desc">用 Hive Metastore 对接存量数仓，平滑融合。</div></a>
+<a class="card" href="pages/18-starrocks.html"><span class="num">第 18 章</span><div class="ttl">StarRocks 极速查询</div><div class="desc">外部 catalog 直查 Paimon，对外秒级 OLAP。</div></a>
+<a class="card" href="pages/19-iceberg-wedata.html"><span class="num">第 19 章</span><div class="ttl">Iceberg 对比 &amp; WeData</div><div class="desc">Paimon vs Iceberg 选型，与腾讯云 WeData 平台。</div></a>
+</div>
+
+<h3>⑦ 收尾</h3>
+<div class="cards">
 <a class="card" href="pages/13-resources.html"><span class="num">第 13 章</span><div class="ttl">学习资源与下一步</div><div class="desc">官方文档导读、术语速查、继续提升的方向。</div></a>
 </div>
 
@@ -97,6 +112,8 @@ def build(code, term, exercise):
 <div class="node"><div class="nt">CDC 与湖仓</div><div class="nd">变更捕获 / 表格式由来</div></div>
 <div class="arrow">↓</div>
 <div class="node brand"><div class="nt">Apache Paimon</div><div class="nd">概念 → 上手 → 实战 → 调优</div></div>
+<div class="arrow">↓</div>
+<div class="node"><div class="nt">生态与引擎</div><div class="nd">Flink / Spark / Hive / StarRocks / Iceberg / WeData</div></div>
 </div>
 
 <h2>建议时间安排</h2>
@@ -108,14 +125,16 @@ def build(code, term, exercise):
 <tr><td>第二阶段</td><td>第 3–4 章</td><td>批/流区别 + Spark/Flink + CDC + 湖仓</td><td>约 1–2 周</td><td>能说清流批差异、CDC 与湖仓是什么</td></tr>
 <tr><td>第三阶段</td><td>第 5–8 章</td><td>Paimon 概念 + 环境搭建 + Quick Start</td><td>约 1 周</td><td>能跑通最小示例、理解核心特性</td></tr>
 <tr><td>第四阶段</td><td>第 9–10 章</td><td>CDC 入湖实战 + 表类型与调优</td><td>约 1 周</td><td>能搭一条实时入湖链路</td></tr>
-<tr><td>第五阶段</td><td>第 11–13 章</td><td>选型对比 + 排错 + 继续提升</td><td>按需</td><td>能回答「为什么选 Paimon」</td></tr>
+<tr><td>第五阶段</td><td>第 11–12 章</td><td>选型对比 + 排错</td><td>按需</td><td>能回答「为什么选 Paimon」</td></tr>
+<tr><td>第六阶段</td><td>第 14–19 章</td><td>Flink/Spark/Hive/StarRocks 集成 + Iceberg 选型 + WeData</td><td>约 1–2 周</td><td>能搭「源→Flink→Paimon→StarRocks」链路、会做选型</td></tr>
+<tr><td>收尾</td><td>第 13 章</td><td>资源导读 + 继续提升</td><td>按需</td><td>知道去哪深入</td></tr>
 </tbody>
 </table>
 </div>
 
 <h2>三种读法</h2>
 <div class="cards">
-<div class="card"><div class="ttl">完全零基础</div><div class="desc">从第 0 章一路读到第 13 章，别跳。每章练习都做一遍。</div></div>
+<div class="card"><div class="ttl">完全零基础</div><div class="desc">从第 0 章一路读到第 19 章，别跳。每章练习都做一遍。</div></div>
 <div class="card"><div class="ttl">有 SQL/Linux 基础</div><div class="desc">快速扫第 1–2 章，从第 3 章开始认真读。</div></div>
 <div class="card"><div class="ttl">懂大数据，只想学 Paimon</div><div class="desc">直接从第 5 章开始，配合第 6–10 章动手。</div></div>
 </div>

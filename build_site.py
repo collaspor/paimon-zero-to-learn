@@ -26,15 +26,24 @@ PAGES = [
     ("pages/10-advanced.html",      "10","进阶：表类型与调优", False),
     ("pages/11-comparison.html",    "11","对标对比与选型", False),
     ("pages/12-faq.html",           "12","常见问题与排错", False),
+    ("pages/14-ecosystem.html",     "14","生态全景", False),
+    ("pages/15-flink.html",         "15","Flink + Paimon", False),
+    ("pages/16-spark.html",         "16","Spark + Paimon", False),
+    ("pages/17-hive.html",          "17","Hive + Paimon", False),
+    ("pages/18-starrocks.html",     "18","StarRocks 极速查询", False),
+    ("pages/19-iceberg-wedata.html","19","Iceberg 对比 & WeData", False),
     ("pages/13-resources.html",     "13","学习资源与下一步", False),
 ]
 
+# indices below refer to positions in PAGES (0 = index page)
 NAV_GROUPS = [
     ("开始", [0, 1]),
     ("打基础", [2, 3, 4, 5]),
     ("学 Paimon", [6, 7]),
-    ("动手实践", [8, 9, 10]),
-    ("进阶 · 拓展", [11, 12, 13, 14]),
+    ("动手实践", [8, 9, 10, 11]),
+    ("进阶 · 拓展", [12, 13]),
+    ("生态与引擎", [14, 15, 16, 17, 18, 19]),
+    ("收尾", [20]),
 ]
 
 

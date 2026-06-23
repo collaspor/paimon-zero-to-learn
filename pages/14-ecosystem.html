@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生态全景 · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文完整自学教程：Linux、SQL、大数据、CDC、湖仓、Paimon 核心概念、环境搭建、Quick Start、实战与排错。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="progress-bar" id="progress"></div>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="../index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门 · 完整自学</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="../index.html"><span class="idx">•</span>首页 · 学习总览</a>
+<a href="00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="01-linux.html"><span class="idx">1</span>Linux 与终端</a>
+<a href="02-sql.html"><span class="idx">2</span>SQL 与数据建模</a>
+<a href="03-bigdata.html"><span class="idx">3</span>大数据与计算引擎</a>
+<a href="04-cdc-lakehouse.html"><span class="idx">4</span>CDC 与湖仓</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="05-what-is-paimon.html"><span class="idx">5</span>Paimon 是什么</a>
+<a href="06-concepts.html"><span class="idx">6</span>核心概念与原理</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">动手实践</div><nav class="nav">
+<a href="07-env-setup.html"><span class="idx">7</span>环境搭建</a>
+<a href="08-quickstart.html"><span class="idx">8</span>Quick Start 上手</a>
+<a href="09-cdc-practice.html"><span class="idx">9</span>实战：CDC 入湖</a>
+<a href="10-advanced.html"><span class="idx">10</span>进阶：表类型与调优</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">进阶 · 拓展</div><nav class="nav">
+<a href="11-comparison.html"><span class="idx">11</span>对标对比与选型</a>
+<a href="12-faq.html"><span class="idx">12</span>常见问题与排错</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">生态与引擎</div><nav class="nav">
+<a href="14-ecosystem.html"><span class="idx">14</span>生态全景</a>
+<a href="15-flink.html"><span class="idx">15</span>Flink + Paimon</a>
+<a href="16-spark.html"><span class="idx">16</span>Spark + Paimon</a>
+<a href="17-hive.html"><span class="idx">17</span>Hive + Paimon</a>
+<a href="18-starrocks.html"><span class="idx">18</span>StarRocks 极速查询</a>
+<a href="19-iceberg-wedata.html"><span class="idx">19</span>Iceberg 对比 & WeData</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">收尾</div><nav class="nav">
+<a href="13-resources.html"><span class="idx">13</span>学习资源与下一步</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">第 14 章 · 生态与引擎</span>
+<h1>生态全景：Paimon 在大数据栈里的位置</h1>
+<p class="lead">学到这里，你已经会用 Flink + Paimon 做实时入湖了。但真实工作里，Paimon 从不孤军奋战——它和 Flink、Spark、Hive、StarRocks 等一起组成「湖仓栈」。这一章先用一张图把它们的分工讲清楚，后面几章再逐个动手。</p>
+
+<div class="callout key">
+<span class="tag">一句话先记住</span>
+<p>Paimon 是<strong>存数据的「表格式」</strong>（管数据怎么存在湖上）；Flink/Spark/Hive 是<strong>算数据的「计算引擎」</strong>（读写、加工）；StarRocks 是<strong>查得快的「OLAP 引擎」</strong>（对外提供秒级查询）；WeData 是<strong>把这一切托管起来的「云平台」</strong>。它们是分层协作，不是互相替代。</p>
+</div>
+
+<h2>分层看：谁负责什么</h2>
+<div class="flow">
+<div class="node"><div class="nt">数据源</div><div class="nd">MySQL / Kafka / 日志</div></div>
+<div class="arrow">↓ Flink CDC / Spark 写入</div>
+<div class="node brand"><div class="nt">Apache Paimon（表格式 + 存储）</div><div class="nd">数据真正存放的地方：表、主键、快照、文件，落在 HDFS/对象存储上</div></div>
+<div class="arrow">↑↓ 各引擎都来读写同一份数据</div>
+<div class="node"><div class="nt">计算 / 查询引擎</div><div class="nd">Flink（流）· Spark（批）· Hive（数仓）· StarRocks（极速查询）</div></div>
+</div>
+<p>关键认知：<strong>同一张 Paimon 表，可以被多个引擎同时读写</strong>。Flink 实时写进去，Spark 跑批量加工，StarRocks 对外秒级查询，Hive 做兼容查询——大家共用一份数据，不用来回拷贝。这就是「湖仓一体」的价值。</p>
+
+<h2>各组件定位速查</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>组件</th><th>它是什么</th><th>和 Paimon 的关系</th><th>典型用途</th></tr></thead>
+<tbody>
+<tr><td><strong>Flink</strong></td><td>流计算引擎</td><td>最佳拍档：实时写入 / 流式读取</td><td>CDC 入湖、实时宽表、流处理</td></tr>
+<tr><td><strong>Spark</strong></td><td>批处理引擎</td><td>读写 Paimon 表</td><td>批量加工、历史回算、机器学习</td></tr>
+<tr><td><strong>Hive</strong></td><td>老牌数仓 / SQL on Hadoop</td><td>通过 catalog 查询 Paimon 表</td><td>兼容存量数仓、离线查询</td></tr>
+<tr><td><strong>StarRocks</strong></td><td>OLAP 极速查询引擎</td><td>外部 catalog 直查 Paimon</td><td>对外报表、即席查询、加速</td></tr>
+<tr><td><strong>Iceberg</strong></td><td>另一种湖表格式（<em>竞品</em>）</td><td>同层替代关系，不是协作</td><td>对比选型时的参照物</td></tr>
+<tr><td><strong>WeData</strong></td><td>腾讯云数据开发平台</td><td>托管运行上面这一整套</td><td>云上一站式开发、调度、运维</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout note">
+<span class="tag">为什么要分清「层」</span>
+<p>新手最容易混淆的是「Paimon 和 Flink 是不是二选一」。不是。Flink 是工具，Paimon 是工具加工/存放的「料」。真正和 Paimon 二选一的是 <strong>Iceberg / Hudi</strong> 这类同样是「表格式」的产品。把这点理清，后面就顺了。</p>
+</div>
+
+<div class="exercise"><div class="ex-h">练习 14-1</div><div><p>把下列组件归类到「表格式 / 计算引擎 / OLAP 查询 / 云平台」：Paimon、Flink、StarRocks、WeData、Spark、Iceberg。</p></div><details class="answer"><summary>查看参考答案</summary><p>表格式：Paimon、Iceberg；计算引擎：Flink（流）、Spark（批）；OLAP 查询引擎：StarRocks；云平台：WeData。其中 Paimon 与 Iceberg 是同层竞品（二选一），其余是协作关系。</p></details></div>
+
+<div class="callout tip">
+<span class="tag">本章目标</span>
+<p>能说清 Paimon 与 Flink / Spark / Hive / StarRocks / Iceberg / WeData 各自的定位和关系，知道「谁和谁协作、谁和谁是竞品」。接下来四章逐个上手最常见的引擎集成。</p>
+</div>
+
+<div class="pager"><a class="prev" href="12-faq.html"><span class="dir">← 上一页</span><span class="pttl">常见问题与排错</span></a><a class="next" href="15-flink.html"><span class="dir">下一页 →</span><span class="pttl">Flink + Paimon</span></a></div>
+</div></main>
+<nav class="toc" id="toc"></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="../assets/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flink + Paimon · 从 0 学习 Apache Paimon</title>
+<meta name="description" content="面向零基础的 Apache Paimon 中文完整自学教程：Linux、SQL、大数据、CDC、湖仓、Paimon 核心概念、环境搭建、Quick Start、实战与排错。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+<div class="progress-bar" id="progress"></div>
+<div class="topbar">
+  <button class="menu-btn" aria-label="打开菜单">☰</button>
+  <span class="logo">P</span>
+  <strong style="font-size:15px">Paimon 学习站</strong>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<a href="../index.html" class="brand" style="text-decoration:none"><span class="logo">P</span><span><span class="name" style="display:block;color:var(--text)">Paimon 学习站</span><span class="sub">从 0 到入门 · 完整自学</span></span></a>
+<div class="nav-group"><div class="nav-group-title">开始</div><nav class="nav">
+<a href="../index.html"><span class="idx">•</span>首页 · 学习总览</a>
+<a href="00-roadmap.html"><span class="idx">0</span>零基础学习路线</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">打基础</div><nav class="nav">
+<a href="01-linux.html"><span class="idx">1</span>Linux 与终端</a>
+<a href="02-sql.html"><span class="idx">2</span>SQL 与数据建模</a>
+<a href="03-bigdata.html"><span class="idx">3</span>大数据与计算引擎</a>
+<a href="04-cdc-lakehouse.html"><span class="idx">4</span>CDC 与湖仓</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">学 Paimon</div><nav class="nav">
+<a href="05-what-is-paimon.html"><span class="idx">5</span>Paimon 是什么</a>
+<a href="06-concepts.html"><span class="idx">6</span>核心概念与原理</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">动手实践</div><nav class="nav">
+<a href="07-env-setup.html"><span class="idx">7</span>环境搭建</a>
+<a href="08-quickstart.html"><span class="idx">8</span>Quick Start 上手</a>
+<a href="09-cdc-practice.html"><span class="idx">9</span>实战：CDC 入湖</a>
+<a href="10-advanced.html"><span class="idx">10</span>进阶：表类型与调优</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">进阶 · 拓展</div><nav class="nav">
+<a href="11-comparison.html"><span class="idx">11</span>对标对比与选型</a>
+<a href="12-faq.html"><span class="idx">12</span>常见问题与排错</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">生态与引擎</div><nav class="nav">
+<a href="14-ecosystem.html"><span class="idx">14</span>生态全景</a>
+<a href="15-flink.html"><span class="idx">15</span>Flink + Paimon</a>
+<a href="16-spark.html"><span class="idx">16</span>Spark + Paimon</a>
+<a href="17-hive.html"><span class="idx">17</span>Hive + Paimon</a>
+<a href="18-starrocks.html"><span class="idx">18</span>StarRocks 极速查询</a>
+<a href="19-iceberg-wedata.html"><span class="idx">19</span>Iceberg 对比 & WeData</a>
+</nav></div>
+<div class="nav-group"><div class="nav-group-title">收尾</div><nav class="nav">
+<a href="13-resources.html"><span class="idx">13</span>学习资源与下一步</a>
+</nav></div>
+</aside>
+<main class="main"><div class="content">
+
+<span class="eyebrow">第 15 章 · 生态与引擎</span>
+<h1>Flink + Paimon：最佳拍档</h1>
+<p class="lead">Paimon 的前身就是 Flink Table Store，二者天生一对。前面第 8、9 章其实已经用 Flink 写过 Paimon 了，这一章系统梳理 Flink 怎么读写 Paimon，并补上「流式读取」「时间旅行」这些 Flink 专属玩法。</p>
+
+<div class="callout note">
+<span class="tag">前置</span>
+<p>本章沿用第 7 章搭好的 Flink + Paimon 环境（<code>$FLINK_HOME/lib/</code> 里有 paimon-flink jar），命令都在 Flink SQL Client 里执行。</p>
+</div>
+
+<h2>1. 建 Catalog（回顾）</h2>
+<div class="codeblock"><div class="bar"><span>Flink SQL Client</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">CREATE CATALOG paimon WITH (
+    &#x27;type&#x27; = &#x27;paimon&#x27;,
+    &#x27;warehouse&#x27; = &#x27;file:/tmp/paimon&#x27;
+);
+USE CATALOG paimon;</code></pre></div>
+
+<h2>2. 批写 vs 流写</h2>
+<p>Flink 对 Paimon 的写入分两种模式，区别只在 <code>runtime-mode</code>：</p>
+<div class="codeblock"><div class="bar"><span>批量写入（一次性灌数据）</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;batch&#x27;;
+
+CREATE TABLE IF NOT EXISTS dim_city (
+    city_id INT PRIMARY KEY NOT ENFORCED,
+    name    STRING
+);
+INSERT INTO dim_city VALUES (1,&#x27;北京&#x27;),(2,&#x27;上海&#x27;),(3,&#x27;深圳&#x27;);</code></pre></div><div class="codeblock"><div class="bar"><span>流式写入（持续不断）</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;streaming&#x27;;
+SET &#x27;execution.checkpointing.interval&#x27; = &#x27;10 s&#x27;;   -- 流写必须设
+
+INSERT INTO dim_city
+SELECT city_id, name FROM some_streaming_source;</code></pre></div>
+<div class="term"><div class="word">checkpoint<span class="en">检查点</span></div><p>Flink 周期性给作业状态做的「存档」。Paimon 在每个 checkpoint 提交一次写入并生成 snapshot——所以流写一定要设 checkpoint，否则数据提交不了、查不到。</p></div>
+
+<h2>3. 流式读取：Paimon 当成「带历史的 Kafka」</h2>
+<p>Flink 读 Paimon 最强大的能力是<strong>流式读取</strong>：不仅能读到当前快照，还能持续读出后续的<em>变更</em>（增删改）。</p>
+<div class="codeblock"><div class="bar"><span>流式读取一张主键表的变化</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;streaming&#x27;;
+
+-- 从最新快照开始，持续输出后续变更
+SELECT * FROM dim_city /*+ OPTIONS(&#x27;scan.mode&#x27;=&#x27;latest&#x27;) */;</code></pre></div>
+<div class="callout key">
+<span class="tag">为什么这很重要</span>
+<p>这意味着 Paimon 表可以像消息队列一样被「订阅」：上游实时写入 Paimon，下游 Flink 作业流式读取做二次加工，形成<strong>实时数仓的分层（ODS→DWD→DWS）</strong>，而中间不再需要额外的 Kafka。</p>
+</div>
+
+<h2>4. 时间旅行：读历史版本</h2>
+<div class="codeblock"><div class="bar"><span>按快照 / 时间点查询</span><button class="copy-btn">复制</button></div><pre><code class="language-sql">SET &#x27;execution.runtime-mode&#x27; = &#x27;batch&#x27;;
+
+-- 看有哪些快照
+SELECT snapshot_id, commit_time FROM dim_city$snapshots;
+
+-- 读第 3 个快照时的数据
+SELECT * FROM dim_city /*+ OPTIONS(&#x27;scan.snapshot-id&#x27;=&#x27;3&#x27;) */;
+
+-- 或按时间点读（毫秒时间戳）
+SELECT * FROM dim_city /*+ OPTIONS(&#x27;scan.timestamp-millis&#x27;=&#x27;1718000000000&#x27;) */;</code></pre></div>
+
+<h2>5. 常见报错</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>报错 / 现象</th><th>原因</th><th>解决</th></tr></thead>
+<tbody>
+<tr><td>ClassNotFound / Catalog 创建失败</td><td>paimon-flink jar 没放进 lib</td><td>把对应 Flink 版本的 paimon-flink-*.jar 放入 <code>$FLINK_HOME/lib/</code> 并重启集群</td></tr>
+<tr><td>流写后查不到数据</td><td>没设 checkpoint</td><td><code>SET 'execution.checkpointing.interval'='10 s'</code></td></tr>
+<tr><td>流读没有输出</td><td>表没有新变更 / scan.mode 不对</td><td>确认上游在写入，或用 <code>scan.mode='latest-full'</code> 先读全量再读增量</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="exercise"><div class="ex-h">练习 15-1</div><div><p>你想让下游 Flink 作业「订阅」一张 Paimon 主键表，只处理新发生的增删改，应该用什么读取方式？这相比传统「Paimon 之上再接一个 Kafka」有什么好处？</p></div><details class="answer"><summary>查看参考答案</summary><p>用流式读取（streaming 模式 + <code>scan.mode='latest'</code> 之类）订阅变更。好处：省掉了中间的 Kafka，数据只存一份在 Paimon 里，既能批查又能被流式订阅，降低了架构复杂度和存储成本。</p></details></div>
+
+<div class="callout tip">
+<span class="tag">本章目标</span>
+<p>掌握 Flink 对 Paimon 的批写/流写、流式读取、时间旅行，理解「Paimon 可被流式订阅」对实时数仓分层的意义。下一章换 Spark，体会同一份数据被批引擎读写。</p>
+</div>
+
+<div class="pager"><a class="prev" href="14-ecosystem.html"><span class="dir">← 上一页</span><span class="pttl">生态全景</span></a><a class="next" href="16-spark.html"><span class="dir">下一页 →</span><span class="pttl">Spark + Paimon</span></a></div>
+</div></main>
+<nav class="toc" id="toc"></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="../assets/main.js"></script>
+</body>
+</html>
