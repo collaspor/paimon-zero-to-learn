@@ -310,13 +310,18 @@ ORDER BY cnt DESC;""")) + """
 <p>结合前几章：它既不是数据库，也不是消息队列，也不是计算引擎，而是<strong>数据湖里的一种表格式</strong>（第 4 章），让流 + 批 + 数据湖存储统一起来，并把<strong>实时更新</strong>做得特别强。</p>
 
 <h2>核心特性</h2>
+<p>下面 6 张卡是 Paimon 的核心卖点速览。每张都能点进<strong>下一章「核心特性详解」</strong>看它的「痛点 → 原理 → 怎么配 → 怎么用」深度讲解。</p>
 <div class="cards">
-<div class="card"><div class="ttl">流批一体</div><div class="desc">同一份数据，既能流式消费，也能批量分析，不用维护两套存储。</div></div>
-<div class="card"><div class="ttl">主键更新强</div><div class="desc">基于 LSM 结构处理更新，特别适合高频 upsert 和 CDC 入湖。</div></div>
-<div class="card"><div class="ttl">Changelog</div><div class="desc">能产出数据变化记录，供下游做增量计算。</div></div>
-<div class="card"><div class="ttl">Time Travel</div><div class="desc">可查询历史某个时间点 / 版本的数据，便于回溯和排查。</div></div>
-<div class="card"><div class="ttl">Schema Evolution</div><div class="desc">表结构变了（加字段等）也不用重写历史数据。</div></div>
-<div class="card"><div class="ttl">多引擎查询</div><div class="desc">Flink 集成最强，也支持 Spark、Trino、StarRocks、Doris 等。</div></div>
+<a class="card" href="05b-features.html#feat-stream-batch"><div class="ttl">流批一体 →</div><div class="desc">同一份数据，既能流式消费，也能批量分析，不用维护两套存储。</div></a>
+<a class="card" href="05b-features.html#feat-pk-update"><div class="ttl">主键更新强 →</div><div class="desc">基于 LSM 结构处理更新，特别适合高频 upsert 和 CDC 入湖。</div></a>
+<a class="card" href="05b-features.html#feat-changelog"><div class="ttl">Changelog →</div><div class="desc">能产出数据变化记录，供下游做增量计算。</div></a>
+<a class="card" href="05b-features.html#feat-time-travel"><div class="ttl">Time Travel →</div><div class="desc">可查询历史某个时间点 / 版本的数据，便于回溯和排查。</div></a>
+<a class="card" href="05b-features.html#feat-schema-evolution"><div class="ttl">Schema Evolution →</div><div class="desc">表结构变了（加字段等）也不用重写历史数据。</div></a>
+<a class="card" href="05b-features.html#feat-multi-engine"><div class="ttl">多引擎查询 →</div><div class="desc">Flink 集成最强，也支持 Spark、Trino、StarRocks、Doris 等。</div></a>
+</div>
+<div class="callout tip">
+<span class="tag">想深入每个特性？</span>
+<p>这 6 个特性的详细原理、痛点剖析和可运行示例，全在 <a href="05b-features.html"><strong>下一章「核心特性详解」</strong></a>。本章先建立整体印象即可。</p>
 </div>
 
 <h2>它最擅长的事：实时更新</h2>
@@ -345,7 +350,7 @@ ORDER BY cnt DESC;""")) + """
 
 <div class="callout tip">
 <span class="tag">本章目标</span>
-<p>能用一两句话向别人解释 Paimon 是什么、擅长什么、什么场景用它。下一章深入它的核心概念和原理——看懂了，文档就不再是天书。</p>
+<p>能用一两句话向别人解释 Paimon 是什么、擅长什么、什么场景用它。下一章把上面这 6 大核心特性逐个掰开——讲清每个「解决什么痛点、底层怎么做到、怎么配怎么用」。</p>
 </div>
 """
 

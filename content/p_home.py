@@ -47,6 +47,7 @@ def build(code, term, exercise):
 
 <h3>③ 学 Paimon</h3>
 <div class="cards">
+<a class="card" href="pages/05b-features.html"><span class="num">第 5+ 章</span><div class="ttl">核心特性详解</div><div class="desc">六大特性逐个深讲：痛点 → 原理 → 配置 → 可运行示例。</div></a>
 <a class="card" href="pages/06-concepts.html"><span class="num">第 6 章</span><div class="ttl">核心概念与原理</div><div class="desc">snapshot/manifest/LSM/compaction/changelog 配图详解。</div></a>
 <a class="card" href="pages/07-env-setup.html"><span class="num">第 7 章</span><div class="ttl">环境搭建</div><div class="desc">Java、Flink、Paimon jar 一步步装好，含版本与排错。</div></a>
 </div>

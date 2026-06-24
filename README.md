@@ -8,7 +8,7 @@
 
 https://collaspor.github.io/paimon-zero-to-learn/
 
-## 内容结构（首页 + 20 章，七个阶段）
+## 内容结构（首页 + 21 章，七个阶段）
 
 | 阶段 | 章节 | 页面 | 内容 |
 |------|------|------|------|
@@ -18,6 +18,7 @@ https://collaspor.github.io/paimon-zero-to-learn/
 | 打基础 | 第 3 章 | `pages/03-bigdata.html` | 大数据与计算引擎：批 vs 流、HDFS、Spark/Flink |
 | 打基础 | 第 4 章 | `pages/04-cdc-lakehouse.html` | CDC 与湖仓：变更捕获、湖仓演进、表格式由来 |
 | 打基础 | 第 5 章 | `pages/05-what-is-paimon.html` | Paimon 是什么：定位、特性、场景 |
+| 学 Paimon | 第 5+ 章 | `pages/05b-features.html` | 核心特性详解：流批一体/主键更新/Changelog/Time Travel/Schema Evolution/多引擎，逐个讲痛点+原理+配置+示例 |
 | 学 Paimon | 第 6 章 | `pages/06-concepts.html` | 核心概念与原理：snapshot/LSM/compaction 配图详解 |
 | 学 Paimon | 第 7 章 | `pages/07-env-setup.html` | 环境搭建：Java/Flink/Paimon jar + 排错 |
 | 动手实践 | 第 8 章 | `pages/08-quickstart.html` | Quick Start：建表、流写、批查、流查（逐行讲解） |

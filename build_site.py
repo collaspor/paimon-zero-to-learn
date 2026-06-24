@@ -19,6 +19,7 @@ PAGES = [
     ("pages/03-bigdata.html",       "3", "大数据与计算引擎", False),
     ("pages/04-cdc-lakehouse.html", "4", "CDC 与湖仓", False),
     ("pages/05-what-is-paimon.html","5", "Paimon 是什么", False),
+    ("pages/05b-features.html",     "5+","核心特性详解", False),
     ("pages/06-concepts.html",      "6", "核心概念与原理", False),
     ("pages/07-env-setup.html",     "7", "环境搭建", False),
     ("pages/08-quickstart.html",    "8", "Quick Start 上手", False),
@@ -39,11 +40,11 @@ PAGES = [
 NAV_GROUPS = [
     ("开始", [0, 1]),
     ("打基础", [2, 3, 4, 5]),
-    ("学 Paimon", [6, 7]),
-    ("动手实践", [8, 9, 10, 11]),
-    ("进阶 · 拓展", [12, 13]),
-    ("生态与引擎", [14, 15, 16, 17, 18, 19]),
-    ("收尾", [20]),
+    ("学 Paimon", [6, 7, 8]),
+    ("动手实践", [9, 10, 11, 12]),
+    ("进阶 · 拓展", [13, 14]),
+    ("生态与引擎", [15, 16, 17, 18, 19, 20]),
+    ("收尾", [21]),
 ]
 
 
